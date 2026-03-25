@@ -368,7 +368,7 @@ function App(){
     setError(null);setStep('analyzing');setLoadIdx(0);
     try{
       const prompt=buildPrompt(form,depth);
-      const msgs=[{role:'user',content:pdfB64?[{type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfB64}},{type:'text',text:prompt}]:[{type:'text',text:prompt}]}];
+      const msgs=[{role:'user',content:[{type:'text',text:prompt}]}];
       const raw=await callAPI(msgs,depth==='deep');
       const json=JSON.parse(raw.replace(/```json|```/g,'').trim());
       setResults(json);setStep('results');
