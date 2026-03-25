@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Angel Lens — Melek Yatırımcı Platformu</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#F9FAFB;color:#111827;min-height:100vh}
+input,textarea,select,button{font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#F1F5F9}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+.inp{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;color:#111827;background:white;outline:none;transition:border-color .15s}
+.inp:focus{border-color:#2563EB}
+.ta{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;color:#111827;background:white;outline:none;resize:vertical}
+.ta:focus{border-color:#2563EB}
+.sel{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:14px;color:#111827;background:white;outline:none}
+.card{background:white;border-radius:16px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);margin-bottom:18px}
+.st{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:#111827;margin-bottom:16px}
+.lbl{font-size:11px;font-weight:700;color:#6B7280;letter-spacing:.6px;margin-bottom:5px;text-transform:uppercase}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.btn-p{width:100%;padding:15px;background:#111827;color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
+.btn-p:hover{opacity:.9}.btn-p:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed}
+.tog{padding:8px 15px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;border:2px solid #E5E7EB;background:white;color:#6B7280;transition:all .15s}
+.tog.on{border-color:#2563EB;background:#EFF6FF;color:#2563EB}
+.bt{height:5px;background:#F3F4F6;border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .35s ease forwards}
+@keyframes ts{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.toast{animation:ts .3s ease forwards;position:fixed;top:72px;right:20px;background:#059669;color:white;padding:10px 18px;border-radius:10px;font-weight:700;font-size:13px;z-index:999;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+@media print{header,[data-np]{display:none!important}body{background:white}}
+
+/* API KEY MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal{background:white;border-radius:20px;padding:32px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const {useState,useEffect,useRef}=React;
+
+// ── STORAGE (localStorage fallback for standalone) ─────────────
+const STORE_PFX='al3:';
+const storage={
+  async set(k,v){try{localStorage.setItem(k,v);}catch{}},
+  async get(k){try{const v=localStorage.getItem(k);return v?{value:v}:null;}catch{return null;}},
+  async delete(k){try{localStorage.removeItem(k);}catch{}},
+  async list(pfx){try{const keys=Object.keys(localStorage).filter(k=>k.startsWith(pfx));return{keys};}catch{return{keys:[]};}}
+};
+
+async function saveAnalysis(form,results){
+  const id=Date.now().toString();
+  await storage.set(STORE_PFX+id,JSON.stringify({id,form,results,savedAt:new Date().toISOString()}));
+  return id;
+}
+async function loadAllAnalyses(){
+  const{keys}=await storage.list(STORE_PFX);
+  const out=[];
+  for(const key of keys){
+    try{const r=await storage.get(key);if(r)out.push({key,...JSON.parse(r.value)});}catch{}
+  }
+  return out.sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
+}
+async function deleteAnalysis(key){await storage.delete(key);}
+
+// ── CRITERIA ──────────────────────────────────────────────────
+const VC_CRITERIA=[
+  {id:"market",tr:"Pazar Değerlendirmesi",en:"Market Assessment",w:15},
+  {id:"competitive",tr:"Rekabet Avantajı",en:"Competitive Advantage",w:20},
+  {id:"financial",tr:"Finansal Profil",en:"Financial Profile",w:15},
+  {id:"management",tr:"Yönetim",en:"Management",w:20},
+  {id:"valuation",tr:"Şirket Değeri",en:"Valuation",w:10},
+  {id:"governance",tr:"Denetim & Kontrol",en:"Governance",w:5},
+  {id:"value_creation",tr:"Değer Yaratma",en:"Value Creation",w:5},
+  {id:"exit",tr:"Çıkış Fırsatları",en:"Exit Opportunities",w:10},
+];
+const ANGEL_CRITERIA=[
+  {id:"founder_fit",tr:"Founder-Market Fit",en:"Founder-Market Fit",w:0},
+  {id:"network",tr:"Kişisel Ağ Değeri",en:"Personal Network Value",w:0},
+];
+const ALL_CRITERIA=[...VC_CRITERIA,...ANGEL_CRITERIA];
+
+const LOADING={
+  tr:["Pitch deck analiz ediliyor…","Kurucu profilleri araştırılıyor…","Pazar ve rekabet verileri taranıyor…","VC 8 Kriteri uygulanıyor…","Angel kriterleri değerlendiriliyor…","Exit ve getiri analizi hesaplanıyor…","Yatırım raporu derleniyor…"],
+  en:["Reading pitch deck…","Researching founder profiles…","Scanning market & competition…","Applying VC 8 Criteria…","Evaluating angel criteria…","Calculating exit & return analysis…","Compiling investment report…"],
+};
+
+const VC8=`GİRİŞİM SERMAYESİ FONLARININ 8 KRİTERİ:
+1. PAZAR DEĞERLENDİRMESİ: Büyümeye açık, talep yüksek, rekabet uygun, şeffaf pazar mı?
+2. REKABET AVANTAJI: Pazar liderleri, üstün/zayıf noktalar, sürdürülebilir avantaj?
+3. FİNANSAL PROFİL: Finansal yapı büyümeyi taşıyacak güçte mi?
+4. YÖNETİM: Ekip yetkinliği, kritik açıklar, kurucu motivasyonu?
+5. ŞİRKET DEĞERİ: Değerleme piyasa koşullarına makul mü?
+6. DENETİM & KONTROL: Yönetim denetimi, azınlık hakları?
+7. DEĞER YARATMA: Katma değer, sermaye dışı katkı, portföy sinerjisi?
+8. ÇIKIŞ FIRSATLARI: Uygun çıkış yolu, potansiyel alıcılar?
+ANGEL EK KRİTERLER:
+9. FOUNDER-MARKET FIT: Kurucular bu problemi çözmek için ideal konumda mı?
+10. KİŞİSEL AĞ DEĞERİ: Yatırımcı kendi ağıyla ne katkı sağlayabilir?`;
+
+// ── UTILS ─────────────────────────────────────────────────────
+const sc=s=>s>=7.5?'#059669':s>=6.0?'#D97706':s>=4.5?'#EA580C':'#DC2626';
+const scH=s=>s>=7.5?'059669':s>=6.0?'D97706':s>=4.5?'EA580C':'DC2626';
+const REC={
+  pass:{tr:'GEÇ',en:'PASS',bg:'#FEF2F2',c:'#DC2626',b:'#FECACA'},
+  watch:{tr:'İZLE',en:'WATCH',bg:'#FFFBEB',c:'#D97706',b:'#FDE68A'},
+  meeting:{tr:'TOPLANTI AL',en:'TAKE MEETING',bg:'#EFF6FF',c:'#2563EB',b:'#BFDBFE'},
+  diligence:{tr:'DERİN İNCELEME',en:'DEEP DILIGENCE',bg:'#F0FDF4',c:'#059669',b:'#A7F3D0'},
+};
+const rcfg=r=>REC[r]||REC.meeting;
+const rcH_=r=>({pass:'DC2626',watch:'D97706',meeting:'2563EB',diligence:'059669'})[r]||'2563EB';
+const rcL_=r=>({pass:'GEÇ',watch:'İZLE',meeting:'TOPLANTI AL',diligence:'DERİN İNCELEME'})[r]||'TOPLANTI AL';
+
+// ── PPTX ──────────────────────────────────────────────────────
+async function loadPptx(){if(window.PptxGenJS)return;await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+
+async function generatePptx(results,form){
+  await loadPptx();
+  const pptx=new window.PptxGenJS();pptx.layout='LAYOUT_16x9';pptx.title=`${form.companyName||'Startup'} - Angel Lens`;
+  const W='FFFFFF',N='111827',B='2563EB',G='9CA3AF',LT='F9FAFB';
+  const ws=results.weighted_score||0,wsc=scH(ws),rrc=rcH_(results.recommendation),rrl=rcL_(results.recommendation);
+  const ex=results.exit_analysis||{};
+
+  let sl=pptx.addSlide();sl.background={color:N};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:.32,h:5.625,fill:{color:B}});
+  sl.addText('ANGEL LENS',{x:.55,y:.45,w:5,h:.28,fontSize:9,color:G,bold:true,charSpacing:4});
+  sl.addText(form.companyName||'Şirket',{x:.55,y:.85,w:7.5,h:1.1,fontSize:44,color:W,bold:true,fontFace:'Calibri'});
+  sl.addText(`${form.stage||''} · ${form.sector||''} · ${new Date().toLocaleDateString('tr-TR',{month:'long',year:'numeric'})}`,{x:.55,y:1.95,w:7,h:.34,fontSize:12,color:'6B7280'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.55,y:2.42,w:1.65,h:1.65,fill:{color:'1F2937'}});
+  sl.addText(ws.toFixed(1),{x:.55,y:2.5,w:1.65,h:.95,fontSize:40,color:wsc,bold:true,align:'center'});
+  sl.addText('/10',{x:.55,y:3.38,w:1.65,h:.32,fontSize:11,color:G,align:'center'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:2.5,y:2.68,w:2.7,h:.62,fill:{color:rrc}});
+  sl.addText(rrl,{x:2.5,y:2.68,w:2.7,h:.62,fontSize:12,color:W,bold:true,align:'center',valign:'middle'});
+  sl.addText(results.executive_summary||'',{x:.55,y:3.98,w:9,h:1.3,fontSize:12,color:'D1D5DB',wrap:true,lineSpacingMultiple:1.4});
+
+  sl=pptx.addSlide();sl.background={color:LT};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.55,fill:{color:N}});
+  sl.addText('VC 8 KRİTERİ',{x:.4,y:0,w:9,h:.55,fontSize:13,color:W,bold:true,valign:'middle'});
+  VC_CRITERIA.forEach((c,i)=>{const s=results.scores?.[c.id]?.score||0,col=scH(s),y=.7+i*.56;sl.addText(c.tr,{x:.3,y,w:2.8,h:.34,fontSize:11,color:'374151',valign:'middle'});sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:y+.08,w:5.6,h:.19,fill:{color:'E5E7EB'}});const bw=(s/10)*5.6;if(bw>.01)sl.addShape(pptx.shapes.RECTANGLE,{x:3.75,y:y+.08,w:bw,h:.19,fill:{color:col}});sl.addText(s.toFixed(1),{x:9.45,y,w:.5,h:.34,fontSize:12,color:col,bold:true,align:'right',valign:'middle'});});
+
+  sl=pptx.addSlide();sl.background={color:LT};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.55,fill:{color:N}});
+  sl.addText('EXIT ANALİZİ & GETİRİ HESABI',{x:.4,y:0,w:9,h:.55,fontSize:13,color:W,bold:true,valign:'middle'});
+  const kpis=[['Giriş Değeri',ex.entry_valuation||'—'],['Hedef Exit',ex.expected_exit_value||'—'],['Exit Süresi',ex.time_to_exit||'—'],['Baz Getiri',ex.return_scenarios?.base?.multiple?`${ex.return_scenarios.base.multiple}x`:'—']];
+  kpis.forEach(([lbl,val],i)=>{const x=.28+i*2.42;sl.addShape(pptx.shapes.RECTANGLE,{x,y:.7,w:2.2,h:1.18,fill:{color:'F8FAFC'}});sl.addText(lbl,{x,y:.78,w:2.2,h:.3,fontSize:9,color:'6B7280',align:'center',bold:true});sl.addText(val,{x,y:1.08,w:2.2,h:.65,fontSize:18,color:'111827',bold:true,align:'center',valign:'middle'});});
+  const scen=[['BEAR',ex.return_scenarios?.bear,'DC2626'],['BAZ',ex.return_scenarios?.base,'D97706'],['BULL',ex.return_scenarios?.bull,'059669']];
+  scen.forEach(([lbl,s,col],i)=>{if(!s)return;const x=.28+i*3.18;sl.addShape(pptx.shapes.RECTANGLE,{x,y:2.44,w:2.92,h:1.5,fill:{color:'F9FAFB'}});sl.addShape(pptx.shapes.RECTANGLE,{x,y:2.44,w:2.92,h:.3,fill:{color:col}});sl.addText(lbl,{x,y:2.44,w:2.92,h:.3,fontSize:10,color:W,bold:true,align:'center',valign:'middle'});sl.addText(`${s.multiple||'?'}x`,{x,y:2.77,w:2.92,h:.55,fontSize:26,color:col,bold:true,align:'center'});sl.addText(s.irr||'',{x,y:3.3,w:2.92,h:.26,fontSize:10,color:'6B7280',align:'center'});sl.addText(s.exit_value||'',{x,y:3.55,w:2.92,h:.26,fontSize:10,color:'374151',align:'center'});});
+  (ex.exit_candidates||[]).slice(0,5).forEach((c,i)=>{const x=.28+i*1.9;sl.addShape(pptx.shapes.RECTANGLE,{x,y:4.44,w:1.75,h:.86,fill:{color:'EFF6FF'}});sl.addText(c.name||'',{x,y:4.47,w:1.75,h:.36,fontSize:10,color:'1E40AF',bold:true,align:'center',valign:'middle'});sl.addText(c.type||'',{x,y:4.82,w:1.75,h:.28,fontSize:8,color:'6B7280',align:'center'});});
+
+  sl=pptx.addSlide();sl.background={color:LT};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.55,fill:{color:N}});
+  sl.addText('BULL CASE & BEAR CASE',{x:.4,y:0,w:9,h:.55,fontSize:13,color:W,bold:true,valign:'middle'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y:.68,w:4.65,h:4.7,fill:{color:'F0FDF4'}});sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y:.68,w:4.65,h:.42,fill:{color:'059669'}});sl.addText('BULL CASE',{x:.35,y:.68,w:4.45,h:.42,fontSize:12,color:W,bold:true,valign:'middle',charSpacing:1});
+  (results.bull_case||[]).slice(0,5).forEach((item,i)=>{sl.addShape(pptx.shapes.RECTANGLE,{x:.4,y:1.2+i*.68,w:.06,h:.42,fill:{color:'059669'}});sl.addText(item,{x:.58,y:1.18+i*.68,w:4.1,h:.46,fontSize:11,color:'065F46',wrap:true,valign:'top'});});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:5.1,y:.68,w:4.65,h:4.7,fill:{color:'FFF7ED'}});sl.addShape(pptx.shapes.RECTANGLE,{x:5.1,y:.68,w:4.65,h:.42,fill:{color:'EA580C'}});sl.addText('BEAR CASE',{x:5.2,y:.68,w:4.45,h:.42,fontSize:12,color:W,bold:true,valign:'middle',charSpacing:1});
+  (results.bear_case||[]).slice(0,5).forEach((item,i)=>{sl.addShape(pptx.shapes.RECTANGLE,{x:5.25,y:1.2+i*.68,w:.06,h:.42,fill:{color:'EA580C'}});sl.addText(item,{x:5.43,y:1.18+i*.68,w:4.1,h:.46,fontSize:11,color:'7C2D12',wrap:true,valign:'top'});});
+
+  sl=pptx.addSlide();sl.background={color:LT};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.55,fill:{color:N}});
+  sl.addText('TOPLANTIDA SORULACAK SORULAR',{x:.4,y:0,w:9,h:.55,fontSize:13,color:W,bold:true,valign:'middle'});
+  (results.questions||[]).slice(0,4).forEach((q,i)=>{const y=.68+i*1.22;sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y,w:9.5,h:1.12,fill:{color:'F9FAFB'}});sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y,w:.06,h:1.12,fill:{color:B}});sl.addText((q.category||'').toUpperCase(),{x:.44,y:y+.04,w:2,h:.22,fontSize:8,color:'2563EB',bold:true,charSpacing:1});sl.addText(q.question||'',{x:.44,y:y+.24,w:9,h:.36,fontSize:11,color:'111827',bold:true,wrap:true});sl.addText(`✓ ${q.good_answer||''}`,{x:.44,y:y+.62,w:4.45,h:.44,fontSize:9,color:'059669',wrap:true});sl.addText(`⚠ ${q.red_flag||''}`,{x:5.05,y:y+.62,w:4.6,h:.44,fontSize:9,color:'DC2626',wrap:true});});
+
+  sl=pptx.addSlide();sl.background={color:N};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.55,fill:{color:B}});
+  sl.addText('MEETING CHEAT SHEET',{x:.4,y:0,w:9,h:.55,fontSize:14,color:W,bold:true,valign:'middle',charSpacing:2});
+  sl.addText(form.companyName||'',{x:.5,y:.7,w:5.5,h:.72,fontSize:28,color:W,bold:true});
+  sl.addText(`Ağırlıklı: ${ws.toFixed(1)}/10  |  ${form.stage||''}`,{x:.5,y:1.4,w:5,h:.34,fontSize:12,color:G});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:6.5,y:.68,w:3.2,h:.88,fill:{color:rrc}});
+  sl.addText(rrl,{x:6.5,y:.68,w:3.2,h:.88,fontSize:16,color:W,bold:true,align:'center',valign:'middle'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.3,y:1.9,w:9.4,h:1.0,fill:{color:'1F2937'}});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.3,y:1.9,w:9.4,h:.27,fill:{color:B}});
+  sl.addText('TEK SORU',{x:.42,y:1.9,w:9,h:.27,fontSize:8,color:W,bold:true,valign:'middle',charSpacing:3});
+  sl.addText(`"${results.key_question||''}"`,{x:.42,y:2.2,w:9,h:.65,fontSize:11,color:'E0E7FF',italic:true,wrap:true});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.3,y:3.08,w:4.58,h:2.26,fill:{color:'1F2937'}});
+  sl.addText('BREAKOUT KOŞULLARI',{x:.44,y:3.13,w:4.2,h:.27,fontSize:9,color:'60A5FA',bold:true,charSpacing:1});
+  (results.breakout_conditions||[]).slice(0,4).forEach((c,i)=>sl.addText(`${i+1}. ${c}`,{x:.44,y:3.46+i*.44,w:4.2,h:.42,fontSize:10,color:'D1D5DB',wrap:true}));
+  sl.addShape(pptx.shapes.RECTANGLE,{x:5.12,y:3.08,w:4.58,h:2.26,fill:{color:'1F2937'}});
+  sl.addText('TAKİP METRİKLERİ',{x:5.26,y:3.13,w:4.2,h:.27,fontSize:9,color:'60A5FA',bold:true,charSpacing:1});
+  (results.metrics_to_watch||[]).slice(0,4).forEach((m,i)=>sl.addText(`${i+1}. ${m}`,{x:5.26,y:3.46+i*.44,w:4.2,h:.42,fontSize:10,color:'D1D5DB',wrap:true}));
+
+  await pptx.writeFile({fileName:`${form.companyName||'Startup'}_AngelLens.pptx`});
+}
+
+// ── PROMPT ────────────────────────────────────────────────────
+function buildPrompt(form,depth,lang){
+  const founders=form.founders.filter(f=>f.name).map(f=>`  - ${f.name} (${f.role||'?'}) ${f.linkedin||''}`).join('\n')||'  -';
+  return `Sen üst düzey bir VC General Partner ve deneyimli Angel Investor'sın.
+
+## STARTUP
+Şirket: ${form.companyName||'?'} | Web: ${form.website||'?'} | Sektör: ${form.sector||'?'} | Ülke: ${form.country||'?'} | Kuruluş: ${form.foundedYear||'?'} | Aşama: ${form.stage} | Tur: ${form.round||'?'}
+Açıklama: ${form.description||'?'} | Problem: ${form.problem||'?'}
+Kurucular:\n${founders}
+Finansallar: ARR=${form.arr||'?'} MRR=${form.mrr||'?'} Burn=${form.burnRate||'?'}/ay Runway=${form.runway||'?'}ay ARPU=${form.arpu||'?'} CAC=${form.cac||'?'} LTV=${form.ltv||'?'}
+Giriş Değerlemesi: Pre-Money=${form.preMoneyVal||'?'} Ask=${form.askAmount||'?'}
+Rakipler: ${form.competitors||'?'}
+
+## ÇERÇEVE
+${VC8}
+
+## GÖREV
+${depth==='deep'?'Derin araştırma: kurucuları web\'de araştır, pazar/rekabet verilerini kullan.':'Hızlı analiz: mevcut verilerle kapsamlı değerlendirme yap.'}
+SADECE geçerli JSON döndür, başka hiçbir şey yazma. Tüm metinler ${lang==='tr'?'Türkçe':'English'} olsun. Puanlar 0.0–10.0.
+
+{"scores":{"market":{"score":0.0,"note":"","pros":[],"cons":[]},"competitive":{"score":0.0,"note":"","pros":[],"cons":[]},"financial":{"score":0.0,"note":"","pros":[],"cons":[]},"management":{"score":0.0,"note":"","pros":[],"cons":[]},"valuation":{"score":0.0,"note":"","pros":[],"cons":[]},"governance":{"score":0.0,"note":"","pros":[],"cons":[]},"value_creation":{"score":0.0,"note":"","pros":[],"cons":[]},"exit":{"score":0.0,"note":"","pros":[],"cons":[]},"founder_fit":{"score":0.0,"note":"","pros":[],"cons":[]},"network":{"score":0.0,"note":"","pros":[],"cons":[]}},"weighted_score":0.0,"unweighted_score":0.0,"recommendation":"pass|watch|meeting|diligence","confidence":"low|medium|high","executive_summary":"3-4 cümle","bull_case":["g1","g2","g3","g4"],"bear_case":["r1","r2","r3","r4"],"exit_analysis":{"entry_valuation":"$5M","expected_exit_value":"$30M–$50M","time_to_exit":"3–5 yıl","exit_routes":[{"route":"Stratejik M&A","priority":1,"probability":"Yüksek","notes":"açıklama"},{"route":"Finansal Sponsor","priority":2,"probability":"Orta","notes":""}],"return_scenarios":{"bear":{"multiple":"1.5x","irr":"8% IRR","exit_value":"$7.5M","exit_year":"2028","rationale":"açıklama"},"base":{"multiple":"4x","irr":"25% IRR","exit_value":"$20M","exit_year":"2028–2029","rationale":"açıklama"},"bull":{"multiple":"8x","irr":"45% IRR","exit_value":"$40M","exit_year":"2027–2028","rationale":"açıklama"}},"exit_candidates":[{"name":"Alıcı Adı","type":"Stratejik","motivation":"neden satın alır","likelihood":"Yüksek"},{"name":"Alıcı 2","type":"Finansal","motivation":"","likelihood":"Orta"}],"comparable_exits":[{"company":"Benzer Şirket","value":"$30M","year":"2024","acquirer":"Alıcı","ev_multiple":"~8x Rev"}],"key_risks":"Exit risk özeti 1-2 cümle"},"risks":[{"category":"Pazar","description":"","severity":"high","test":""},{"category":"Ürün","description":"","severity":"medium","test":""},{"category":"Teknik","description":"","severity":"medium","test":""},{"category":"Rekabet","description":"","severity":"high","test":""},{"category":"GTM","description":"","severity":"medium","test":""}],"questions":[{"category":"Ürün","question":"★ soru","good_answer":"","red_flag":""},{"category":"Teknoloji","question":"★ soru","good_answer":"","red_flag":""},{"category":"Traction","question":"★ soru","good_answer":"","red_flag":""},{"category":"Rekabet","question":"soru","good_answer":"","red_flag":""},{"category":"Kurucu","question":"soru","good_answer":"","red_flag":""}],"scenarios":{"bull":{"label":"İyi Durum","score":0.0,"description":"","conditions":[]},"base":{"label":"Baz","score":0.0,"description":"","conditions":[]},"bear":{"label":"Kötü Durum","score":0.0,"description":"","conditions":[]}},"breakout_conditions":["k1","k2","k3"],"key_question":"soru metni","metrics_to_watch":["m1","m2","m3","m4"]}`;
+}
+
+// ── CLAUDE API ────────────────────────────────────────────────
+async function callClaude(msgs,search=false){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),120000); // 2 dk timeout
+  try{
+    const body={model:'claude-sonnet-4-20250514',max_tokens:4000,messages:msgs};
+    if(search)body.tools=[{type:'web_search_20250305',name:'web_search'}];
+    const res=await fetch('/api/proxy',{
+      method:'POST',signal:controller.signal,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    clearTimeout(timer);
+    if(!res.ok){const e=await res.text();throw new Error('API '+res.status+': '+e.slice(0,200));}
+    const data=await res.json();
+    if(data.stop_reason==='tool_use'){
+      const tr=data.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'search executed'}));
+      return callClaude([...msgs,{role:'assistant',content:data.content},{role:'user',content:tr}],search);
+    }
+    return data.content.filter(b=>b.type==='text').map(b=>b.text).join('\n');
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name==='AbortError')throw new Error('Analiz zaman aşımına uğradı (2dk). Hızlı modu deneyin.');
+    if(e.message==='Failed to fetch')throw new Error('Bağlantı hatası. Lütfen API anahtarınızı kontrol edin: Anahtarı Değiştir butonuna tıklayın ve yeniden girin.');
+    throw e;
+  }
+}
+async function parsePdf(b64){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),45000);
+  try{
+    const body={model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:[
+      {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+      {type:'text',text:'Bu pitch deck PDF'inden startup bilgilerini çıkar. SADECE geçerli JSON döndür, başka hiçbir şey yazma:\n{"companyName":"","website":"","sector":"","country":"","foundedYear":"","stage":"Seed","round":"","description":"","problem":"","arr":"","mrr":"","burnRate":"","runway":"","arpu":"","cac":"","ltv":"","preMoneyVal":"","postMoneyVal":"","askAmount":"","founders":[{"name":"","role":"","linkedin":""}],"competitors":"","capTable":""}\nBilgi yoksa boş string bırak.'}
+    ]}]};
+    const res=await fetch('/api/proxy',{method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    clearTimeout(timer);
+    if(!res.ok){const e=await res.text();throw new Error('API '+res.status+': '+e.slice(0,300));}
+    const data=await res.json();
+    const t=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    return JSON.parse(t.replace(/```json|```/g,'').trim());
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name==='AbortError')throw new Error('Zaman aşımı (45sn). İnternet bağlantınızı kontrol edin.');
+    if(e.message==='Failed to fetch')throw new Error('Bağlantı hatası. Lütfen: 1) İnternet bağlantınızı kontrol edin. 2) API anahtarınızın doğru olduğunu kontrol edin (console.anthropic.com). 3) Sayfayı yenileyip API anahtarını tekrar girin (Anahtarı Değiştir butonu).');
+    throw e;
+  }
+}
+
+// ── UI ATOMS ──────────────────────────────────────────────────
+function ScoreGauge({score,size=130}){
+  const[d,setD]=useState(0);
+  useEffect(()=>{const t0=Date.now(),dur=1400,a=()=>{const t=Math.min((Date.now()-t0)/dur,1),e=1-Math.pow(1-t,3);setD(score*e);if(t<1)requestAnimationFrame(a);};requestAnimationFrame(a);},[score]);
+  const r=44,cx=56,cy=56,C=2*Math.PI*r,dash=(d/10)*C,col=sc(score);
+  return React.createElement('svg',{width:size,height:size,viewBox:'0 0 112 112'},
+    React.createElement('circle',{cx,cy,r,fill:'none',stroke:'#F1F5F9',strokeWidth:9}),
+    React.createElement('circle',{cx,cy,r,fill:'none',stroke:col,strokeWidth:9,strokeDasharray:`${dash} ${C}`,strokeLinecap:'round',transform:`rotate(-90 ${cx} ${cy})`}),
+    React.createElement('text',{x:cx,y:cy-4,textAnchor:'middle',fill:col,style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif"}},d.toFixed(1)),
+    React.createElement('text',{x:cx,y:cy+13,textAnchor:'middle',fill:'#94A3B8',style:{fontSize:9}},'/10')
+  );
+}
+function CBar({label,score,weight}){
+  const[w,setW]=useState(0);
+  useEffect(()=>{const t=setTimeout(()=>setW(score*10),160);return()=>clearTimeout(t);},[score]);
+  return React.createElement('div',{style:{marginBottom:12}},
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}},
+      React.createElement('span',{style:{fontSize:13,fontWeight:500,color:'#374151'}},label),
+      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+        weight>0&&React.createElement('span',{style:{fontSize:10,color:'#9CA3AF',fontWeight:600}},`×${weight}%`),
+        React.createElement('span',{style:{fontSize:14,fontWeight:800,color:sc(score),width:30,textAlign:'right'}},score.toFixed(1))
+      )
+    ),
+    React.createElement('div',{className:'bt'},React.createElement('div',{className:'bf',style:{width:`${w}%`,background:sc(score)}}))
+  );
+}
+
+// ── EXIT BLOCK ────────────────────────────────────────────────
+function ExitBlock({ex,lang,entryVal}){
+  if(!ex)return null;
+  const L=(a,b)=>lang==='tr'?a:b;
+  const SC={bear:{label:L('Kötü Durum','Bear'),c:'#DC2626',bg:'#FEF2F2',b:'#FECACA',icon:'📉'},base:{label:L('Baz Senaryo','Base Case'),c:'#D97706',bg:'#FFFBEB',b:'#FDE68A',icon:'📊'},bull:{label:L('İyi Durum','Bull'),c:'#059669',bg:'#F0FDF4',b:'#A7F3D0',icon:'📈'}};
+  const likeStyle=l=>{const ll=l?.toLowerCase();if(ll?.includes('yüksek')||ll?.includes('high'))return['#F0FDF4','#059669'];if(ll?.includes('düşük')||ll?.includes('low'))return['#FEF2F2','#DC2626'];return['#FFFBEB','#D97706'];};
+  const typeStyle=t=>{const tl=t?.toLowerCase();if(tl?.includes('stratejik')||tl?.includes('strategic'))return['#EFF6FF','#2563EB'];return['#F5F3FF','#7C3AED'];};
+  return React.createElement('div',{className:'card'},
+    React.createElement('div',{className:'st'},`🚪 ${L('Exit Analizi & Getiri Hesabı','Exit Analysis & Return Calculation')}`),
+    // KPI strip
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:12,marginBottom:24}},
+      [{label:L('Giriş Değerlemesi','Entry Valuation'),value:ex.entry_valuation||entryVal||'—',sub:'Pre-money',c:'#2563EB'},
+       {label:L('Hedef Exit Değeri','Target Exit'),value:ex.expected_exit_value||'—',sub:L('Tahmini aralık','Est. range'),c:'#059669'},
+       {label:L('Exit Süresi','Time to Exit'),value:ex.time_to_exit||'—',sub:L('Yatırım ufku','Horizon'),c:'#7C3AED'},
+       {label:L('Baz Getiri','Base Return'),value:ex.return_scenarios?.base?.multiple||'—',sub:ex.return_scenarios?.base?.irr||'',c:'#D97706'},
+      ].map(({label,value,sub,c})=>React.createElement('div',{key:label,style:{background:'#F9FAFB',borderRadius:12,padding:'14px 16px',borderTop:`3px solid ${c}`}},
+        React.createElement('div',{style:{fontSize:11,fontWeight:700,color:'#6B7280',letterSpacing:'.5px',marginBottom:6,textTransform:'uppercase'}},label),
+        React.createElement('div',{style:{fontSize:18,fontWeight:800,color:'#111827',letterSpacing:'-.5px',marginBottom:2}},value),
+        React.createElement('div',{style:{fontSize:11,color:'#9CA3AF'}},sub)
+      ))
+    ),
+    // Scenarios
+    React.createElement('div',{style:{marginBottom:22}},
+      React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#6B7280',letterSpacing:'.8px',marginBottom:12,textTransform:'uppercase'}},`📊 ${L('Getiri Senaryoları','Return Scenarios')}`),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}},
+        ['bear','base','bull'].map(key=>{
+          const s=ex.return_scenarios?.[key],cfg=SC[key];if(!s)return null;
+          return React.createElement('div',{key,style:{background:cfg.bg,border:`1.5px solid ${cfg.b}`,borderRadius:14,padding:18}},
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:10}},React.createElement('span',{style:{fontSize:16}},cfg.icon),React.createElement('span',{style:{fontSize:12,fontWeight:800,color:cfg.c,letterSpacing:'.5px'}},cfg.label.toUpperCase())),
+            React.createElement('div',{style:{fontSize:36,fontWeight:800,color:cfg.c,lineHeight:1,fontFamily:"'Sora',sans-serif",marginBottom:4}},s.multiple||'?x'),
+            React.createElement('div',{style:{fontSize:13,fontWeight:600,color:'#374151',marginBottom:2}},s.exit_value||''),
+            React.createElement('div',{style:{fontSize:12,color:'#6B7280',marginBottom:2}},s.irr||''),
+            React.createElement('div',{style:{fontSize:11,color:'#9CA3AF',marginBottom:8}},s.exit_year||''),
+            React.createElement('div',{style:{fontSize:12,color:'#4B5563',lineHeight:1.5,borderTop:`1px solid ${cfg.b}`,paddingTop:8}},s.rationale||'')
+          );
+        })
+      )
+    ),
+    // Routes
+    ex.exit_routes&&React.createElement('div',{style:{marginBottom:22}},
+      React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#6B7280',letterSpacing:'.8px',marginBottom:12,textTransform:'uppercase'}},`🛤️ ${L('Çıkış Yolları','Exit Routes')}`),
+      React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+        ex.exit_routes.map((r,i)=>React.createElement('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,background:'#F9FAFB',borderRadius:10,padding:'10px 14px'}},
+          React.createElement('div',{style:{width:22,height:22,borderRadius:'50%',background:'#2563EB',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:10,fontWeight:800,flexShrink:0}},r.priority||i+1),
+          React.createElement('div',{style:{flex:1}},React.createElement('div',{style:{fontSize:13,fontWeight:700,color:'#111827',marginBottom:2}},r.route||''),r.notes&&React.createElement('div',{style:{fontSize:11,color:'#6B7280'}},r.notes)),
+          React.createElement('span',{style:{fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:20,...(()=>{const[bg,c]=likeStyle(r.probability);return{background:bg,color:c};})()}},r.probability||'')
+        ))
+      )
+    ),
+    // Candidates
+    ex.exit_candidates&&React.createElement('div',{style:{marginBottom:ex.comparable_exits?22:0}},
+      React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#6B7280',letterSpacing:'.8px',marginBottom:12,textTransform:'uppercase'}},`🎯 ${L('Potansiyel Alıcılar','Potential Acquirers')}`),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}},
+        ex.exit_candidates.map((c,i)=>{const[tbg,tc]=typeStyle(c.type),[lbg,lc]=likeStyle(c.likelihood);return React.createElement('div',{key:i,style:{background:'white',border:'1.5px solid #E5E7EB',borderRadius:12,padding:14}},
+          React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}},
+            React.createElement('div',{style:{fontWeight:700,fontSize:13,color:'#111827'}},c.name||''),
+            React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}},React.createElement('span',{style:{fontSize:9,fontWeight:800,background:tbg,color:tc,padding:'2px 7px',borderRadius:20,whiteSpace:'nowrap'}},c.type||''),React.createElement('span',{style:{fontSize:9,fontWeight:700,background:lbg,color:lc,padding:'2px 7px',borderRadius:20,whiteSpace:'nowrap'}},c.likelihood||''))
+          ),
+          React.createElement('div',{style:{fontSize:11,color:'#6B7280',lineHeight:1.5}},c.motivation||'')
+        );})
+      )
+    ),
+    // Comparables
+    ex.comparable_exits&&React.createElement('div',{style:{marginBottom:ex.key_risks?16:0}},
+      React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#6B7280',letterSpacing:'.8px',marginBottom:12,textTransform:'uppercase'}},`🔄 ${L('Benzer Exit İşlemleri','Comparable Exits')}`),
+      React.createElement('div',{style:{border:'1px solid #E5E7EB',borderRadius:10,overflow:'hidden'}},
+        React.createElement('table',{style:{width:'100%',borderCollapse:'collapse'}},
+          React.createElement('thead',null,React.createElement('tr',{style:{background:'#F3F4F6'}},['Şirket','Değer','Yıl','Alıcı','EV/Multiple'].map(h=>React.createElement('th',{key:h,style:{padding:'8px 12px',textAlign:'left',fontSize:11,fontWeight:700,color:'#6B7280'}},h)))),
+          React.createElement('tbody',null,ex.comparable_exits.map((c,i)=>React.createElement('tr',{key:i,style:{borderTop:'1px solid #E5E7EB',background:i%2?'#FAFAFA':'white'}},
+            React.createElement('td',{style:{padding:'8px 12px',fontSize:12,fontWeight:600,color:'#111827'}},c.company||''),
+            React.createElement('td',{style:{padding:'8px 12px',fontSize:12,fontWeight:700,color:'#059669'}},c.value||''),
+            React.createElement('td',{style:{padding:'8px 12px',fontSize:12,color:'#374151'}},c.year||''),
+            React.createElement('td',{style:{padding:'8px 12px',fontSize:12,color:'#374151'}},c.acquirer||''),
+            React.createElement('td',{style:{padding:'8px 12px',fontSize:12,color:'#7C3AED',fontWeight:600}},c.ev_multiple||'')
+          )))
+        )
+      )
+    ),
+    ex.key_risks&&React.createElement('div',{style:{marginTop:16,background:'#FFF7ED',border:'1px solid #FED7AA',borderRadius:10,padding:'12px 16px'}},
+      React.createElement('div',{style:{fontSize:11,fontWeight:800,color:'#EA580C',letterSpacing:'.5px',marginBottom:4}},`⚠️ ${L('EXIT RİSKİ','EXIT RISK')}`),
+      React.createElement('div',{style:{fontSize:13,color:'#7C2D12',lineHeight:1.6}},ex.key_risks)
+    )
+  );
+}
+
+// ── API KEY MODAL ─────────────────────────────────────────────
+function ApiKeyModal({onSave}){
+  const[key,setKey]=useState(localStorage.getItem('al_apikey')||'');
+  const[show,setShow]=useState(false);
+  return React.createElement('div',{className:'modal-bg'},
+    React.createElement('div',{className:'modal'},
+      React.createElement('div',{style:{width:48,height:48,borderRadius:12,background:'#111827',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:18}},
+        React.createElement('svg',{width:26,height:26,viewBox:'0 0 28 28',fill:'none'},React.createElement('rect',{width:28,height:28,rx:7,fill:'#111827'}),React.createElement('path',{d:'M8 20L14 8L20 20',stroke:'#F9FAFB',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'}),React.createElement('path',{d:'M10 16H18',stroke:'#2563EB',strokeWidth:2.2,strokeLinecap:'round'}))
+      ),
+      React.createElement('h2',{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,marginBottom:8}},'Angel Lens'),
+      React.createElement('p',{style:{fontSize:14,color:'#6B7280',marginBottom:20,lineHeight:1.6}},'Başlamak için Anthropic API anahtarınızı girin. Anahtar yalnızca tarayıcınızda saklanır, hiçbir sunucuya gönderilmez.'),
+      React.createElement('div',{style:{marginBottom:16}},
+        React.createElement('div',{className:'lbl'},'ANTHROPIC API KEY'),
+        React.createElement('div',{style:{position:'relative'}},
+          React.createElement('input',{className:'inp',type:show?'text':'password',value:key,onChange:e=>setKey(e.target.value),placeholder:'sk-ant-api03-…',style:{paddingRight:44}}),
+          React.createElement('button',{onClick:()=>setShow(s=>!s),style:{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',fontSize:16,color:'#9CA3AF'}},show?'🙈':'👁')
+        )
+      ),
+      React.createElement('p',{style:{fontSize:12,color:'#9CA3AF',marginBottom:20,lineHeight:1.6}},
+        'API anahtarınız yoksa ',
+        React.createElement('a',{href:'https://console.anthropic.com',target:'_blank',style:{color:'#2563EB',textDecoration:'none',fontWeight:600}},'console.anthropic.com'),
+        '\'dan alabilirsiniz.'
+      ),
+      React.createElement('button',{onClick:()=>{if(!key.trim())return;localStorage.setItem('al_apikey',key.trim());onSave(key.trim());},disabled:!key.trim(),style:{width:'100%',padding:'13px',background:key.trim()?'#111827':'#E5E7EB',color:key.trim()?'white':'#9CA3AF',border:'none',borderRadius:12,fontWeight:700,fontSize:15,cursor:key.trim()?'pointer':'not-allowed',fontFamily:"'Sora',sans-serif"}},'🚀 Başla')
+    )
+  );
+}
+
+// ── RESULTS VIEW (condensed) ──────────────────────────────────
+function ResultsView({results,form,lang,onPptx,pptxBusy}){
+  const R=rcfg(results.recommendation),ws=results.weighted_score||0,us=results.unweighted_score||0;
+  const L=(a,b)=>lang==='tr'?a:b;
+  const sevS=s=>{const m={high:['#FEF2F2','#DC2626'],medium:['#FFFBEB','#D97706'],low:['#F0FDF4','#059669']};return m[s]||m.medium;};
+  return React.createElement('div',{style:{maxWidth:980,margin:'0 auto',padding:'32px 24px'},className:'fi'},
+    // HERO
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:20}},
+        React.createElement('div',{style:{flex:1,minWidth:280}},
+          React.createElement('div',{style:{fontSize:11,fontWeight:700,color:'#6B7280',letterSpacing:'.8px',marginBottom:6}},`${(form.companyName||'').toUpperCase()} · ${(form.stage||'').toUpperCase()} · ${new Date().toLocaleDateString('tr-TR',{month:'long',year:'numeric'}).toUpperCase()}`),
+          React.createElement('h1',{style:{margin:'0 0 12px',fontSize:24,fontWeight:800,color:'#111827',letterSpacing:'-.4px',fontFamily:"'Sora',sans-serif"}},L('Yatırım Değerlendirmesi','Investment Assessment')),
+          React.createElement('p',{style:{margin:'0 0 18px',fontSize:14,color:'#4B5563',lineHeight:1.7,maxWidth:520}},results.executive_summary),
+          React.createElement('div',{style:{display:'inline-flex',alignItems:'center',gap:8,background:R.bg,border:`1.5px solid ${R.b}`,borderRadius:10,padding:'9px 16px'}},
+            React.createElement('div',{style:{width:8,height:8,borderRadius:'50%',background:R.c}}),
+            React.createElement('span',{style:{fontSize:13,fontWeight:800,color:R.c,letterSpacing:'.5px'}},L(R.tr,R.en))
+          )
+        ),
+        React.createElement('div',{style:{display:'flex',gap:22,alignItems:'center'}},
+          React.createElement('div',{style:{textAlign:'center'}},React.createElement(ScoreGauge,{score:ws,size:128}),React.createElement('div',{style:{fontSize:10,fontWeight:700,color:'#9CA3AF',letterSpacing:'.6px',marginTop:4}},L('AĞIRLIKLI','WEIGHTED'))),
+          React.createElement('div',{style:{textAlign:'center'}},React.createElement('div',{style:{fontSize:34,fontWeight:800,color:sc(us),lineHeight:1}},us.toFixed(1)),React.createElement('div',{style:{fontSize:10,fontWeight:700,color:'#9CA3AF',letterSpacing:'.6px',marginTop:4}},L('AĞIRLIKSIZ','UNWEIGHTED')))
+        )
+      )
+    ),
+    // CRITERIA
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:0}},
+      React.createElement('div',{className:'card',style:{marginBottom:16}},
+        React.createElement('div',{className:'st'},`📊 ${L('VC 8 Kriteri','VC 8 Criteria')}`),
+        VC_CRITERIA.map(c=>React.createElement(CBar,{key:c.id,label:lang==='tr'?c.tr:c.en,score:results.scores?.[c.id]?.score||0,weight:c.w}))
+      ),
+      React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+        React.createElement('div',{className:'card',style:{marginBottom:0}},
+          React.createElement('div',{className:'st'},`🎯 ${L('Angel Kriterleri','Angel Criteria')}`),
+          ANGEL_CRITERIA.map(c=>React.createElement('div',{key:c.id},
+            React.createElement(CBar,{label:lang==='tr'?c.tr:c.en,score:results.scores?.[c.id]?.score||0,weight:0}),
+            results.scores?.[c.id]?.note&&React.createElement('p',{style:{margin:'-4px 0 12px',fontSize:12,color:'#6B7280',lineHeight:1.6}},results.scores[c.id].note)
+          ))
+        ),
+        results.scenarios&&React.createElement('div',{className:'card',style:{marginBottom:0}},
+          React.createElement('div',{className:'st'},`📈 ${L('Senaryo Analizi','Scenarios')}`),
+          Object.entries(results.scenarios).map(([k,s])=>React.createElement('div',{key:k,style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'10px 0',borderBottom:'1px solid #F3F4F6'}},
+            React.createElement('div',null,React.createElement('div',{style:{fontSize:13,fontWeight:700,color:'#111827',marginBottom:2}},s.label),React.createElement('div',{style:{fontSize:12,color:'#6B7280',lineHeight:1.5,maxWidth:180}},s.description)),
+            React.createElement('span',{style:{fontSize:20,fontWeight:800,color:sc(s.score||0)}},(s.score||0).toFixed(1))
+          ))
+        )
+      )
+    ),
+    // CRITERION DETAIL
+    React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'st'},`🔍 ${L('Kriter Detayları','Criterion Details')}`),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:11}},
+        ALL_CRITERIA.map(c=>{const s=results.scores?.[c.id];if(!s)return null;return React.createElement('div',{key:c.id,style:{background:'#F9FAFB',borderRadius:10,padding:13,borderLeft:`3px solid ${sc(s.score||0)}`}},
+          React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6}},React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'#374151'}},lang==='tr'?c.tr:c.en),React.createElement('span',{style:{fontSize:14,fontWeight:800,color:sc(s.score||0)}},(s.score||0).toFixed(1))),
+          React.createElement('p',{style:{margin:'0 0 6px',fontSize:12,color:'#4B5563',lineHeight:1.6}},s.note),
+          s.pros?.slice(0,2).map((p,i)=>React.createElement('div',{key:i,style:{fontSize:11,color:'#059669',marginBottom:2}},`+ ${p}`)),
+          s.cons?.slice(0,2).map((cc,i)=>React.createElement('div',{key:i,style:{fontSize:11,color:'#DC2626',marginBottom:2}},`− ${cc}`))
+        );})
+      )
+    ),
+    React.createElement(ExitBlock,{ex:results.exit_analysis,lang,entryVal:form.preMoneyVal}),
+    // BULL/BEAR
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:18}},
+      React.createElement('div',{style:{background:'#F0FDF4',border:'1px solid #A7F3D0',borderRadius:16,padding:18}},
+        React.createElement('div',{style:{fontFamily:"'Sora',sans-serif",fontSize:13,fontWeight:700,color:'#065F46',marginBottom:12}},'✅ Bull Case'),
+        (results.bull_case||[]).map((it,i)=>React.createElement('div',{key:i,style:{display:'flex',gap:8,marginBottom:8,fontSize:13,color:'#064E3B',lineHeight:1.6}},React.createElement('span',{style:{color:'#059669',fontWeight:700,flexShrink:0}},`${i+1}.`),React.createElement('span',null,it)))
+      ),
+      React.createElement('div',{style:{background:'#FFF7ED',border:'1px solid #FED7AA',borderRadius:16,padding:18}},
+        React.createElement('div',{style:{fontFamily:"'Sora',sans-serif",fontSize:13,fontWeight:700,color:'#9A3412',marginBottom:12}},'⚠️ Bear Case'),
+        (results.bear_case||[]).map((it,i)=>React.createElement('div',{key:i,style:{display:'flex',gap:8,marginBottom:8,fontSize:13,color:'#7C2D12',lineHeight:1.6}},React.createElement('span',{style:{color:'#EA580C',fontWeight:700,flexShrink:0}},`${i+1}.`),React.createElement('span',null,it)))
+      )
+    ),
+    // RISKS
+    results.risks&&React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'st'},`🚨 ${L('Başlıca Riskler','Key Risks')}`),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
+        results.risks.map((r,i)=>{const[bg,col]=sevS(r.severity);return React.createElement('div',{key:i,style:{background:bg,borderRadius:10,padding:13}},
+          React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6}},React.createElement('span',{style:{fontSize:12,fontWeight:700,color:'#111827'}},r.category),React.createElement('span',{style:{fontSize:9,fontWeight:800,color:col,background:'white',borderRadius:4,padding:'2px 6px',letterSpacing:'.5px'}},(r.severity||'').toUpperCase())),
+          React.createElement('p',{style:{margin:'0 0 6px',fontSize:12,color:'#374151',lineHeight:1.6}},r.description),
+          r.test&&React.createElement('div',{style:{fontSize:11,color:'#6B7280',borderTop:'1px solid rgba(0,0,0,.05)',paddingTop:5,marginTop:5}},`🔎 ${r.test}`)
+        );})
+      )
+    ),
+    // QUESTIONS
+    results.questions&&React.createElement('div',{className:'card'},
+      React.createElement('div',{className:'st'},`❓ ${L('Toplantıda Sorulacak Sorular','Meeting Questions')}`),
+      results.questions.map((q,i)=>React.createElement('div',{key:i,style:{borderLeft:'3px solid #2563EB',paddingLeft:14,marginBottom:18}},
+        React.createElement('div',{style:{fontSize:10,fontWeight:800,color:'#2563EB',letterSpacing:'.7px',marginBottom:4}},(q.category||'').toUpperCase()),
+        React.createElement('div',{style:{fontWeight:700,fontSize:14,color:'#111827',marginBottom:8,lineHeight:1.5}},q.question),
+        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+          React.createElement('div',{style:{background:'#F0FDF4',borderRadius:8,padding:'8px 11px'}},React.createElement('div',{style:{fontSize:10,fontWeight:700,color:'#059669',marginBottom:3}},`✓ ${L('İYİ CEVAP','GOOD ANSWER')}`),React.createElement('div',{style:{fontSize:12,color:'#065F46',lineHeight:1.5}},q.good_answer)),
+          React.createElement('div',{style:{background:'#FFF7ED',borderRadius:8,padding:'8px 11px'}},React.createElement('div',{style:{fontSize:10,fontWeight:700,color:'#EA580C',marginBottom:3}},'⚠ RED FLAG'),React.createElement('div',{style:{fontSize:12,color:'#9A3412',lineHeight:1.5}},q.red_flag))
+        )
+      ))
+    ),
+    results.key_question&&React.createElement('div',{style:{background:'linear-gradient(135deg,#EFF6FF,#F5F3FF)',border:'1.5px solid #BFDBFE',borderRadius:16,padding:20,marginBottom:18}},
+      React.createElement('div',{style:{fontSize:10,fontWeight:800,color:'#2563EB',letterSpacing:'.7px',marginBottom:8}},`💡 ${L('TEK SORU HAKKIMIZ OLSAYDI','THE ONE QUESTION')}`),
+      React.createElement('p',{style:{margin:0,fontSize:15,fontWeight:600,color:'#1E3A8A',lineHeight:1.7,fontStyle:'italic'}},`"${results.key_question}"`)
+    ),
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:18}},
+      results.breakout_conditions&&React.createElement('div',{className:'card',style:{marginBottom:0}},
+        React.createElement('div',{className:'st'},`🚀 ${L('Breakout Koşulları','Breakout Conditions')}`),
+        results.breakout_conditions.map((c,i)=>React.createElement('div',{key:i,style:{display:'flex',gap:8,marginBottom:8,fontSize:13,color:'#374151',lineHeight:1.6}},React.createElement('span',{style:{color:'#2563EB',fontWeight:800,flexShrink:0}},`${i+1}.`),React.createElement('span',null,c)))
+      ),
+      results.metrics_to_watch&&React.createElement('div',{className:'card',style:{marginBottom:0}},
+        React.createElement('div',{className:'st'},`📏 ${L('Takip Edilecek Metrikler','Metrics to Watch')}`),
+        results.metrics_to_watch.map((m,i)=>React.createElement('div',{key:i,style:{display:'flex',gap:8,alignItems:'center',padding:'7px 0',borderBottom:'1px solid #F3F4F6'}},React.createElement('div',{style:{width:6,height:6,borderRadius:'50%',background:'#2563EB',flexShrink:0}}),React.createElement('span',{style:{fontSize:13,color:'#374151'}},m)))
+      )
+    ),
+    React.createElement('div',{className:'card',['data-np']:true},
+      React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:14}},
+        React.createElement('div',null,React.createElement('div',{className:'st',style:{marginBottom:4}},`📥 ${L('Raporu İndir','Export Report')}`),React.createElement('p',{style:{fontSize:13,color:'#6B7280'}},L('PDF: Ctrl+P. PPTX: Exit slaytı dahil 6 sayfalık sunum.','PDF: Ctrl+P. PPTX: 6-slide deck with exit analysis.'))),
+        React.createElement('div',{style:{display:'flex',gap:10}},
+          React.createElement('button',{onClick:()=>window.print(),style:{padding:'11px 20px',background:'#DC2626',color:'white',border:'none',borderRadius:10,fontWeight:700,fontSize:14,cursor:'pointer'}},'📄 PDF'),
+          React.createElement('button',{onClick:onPptx,disabled:pptxBusy,style:{padding:'11px 20px',background:pptxBusy?'#E5E7EB':'#2563EB',color:pptxBusy?'#9CA3AF':'white',border:'none',borderRadius:10,fontWeight:700,fontSize:14,cursor:pptxBusy?'not-allowed':'pointer'}},pptxBusy?L('⏳ Hazırlanıyor…','⏳ Generating…'):'📊 PPTX')
+        )
+      )
+    )
+  );
+}
+
+// ── HISTORY VIEW ──────────────────────────────────────────────
+function HistoryView({lang,onView}){
+  const[analyses,setAnalyses]=useState([]);const[loading,setLoading]=useState(true);
+  const L=(a,b)=>lang==='tr'?a:b;
+  useEffect(()=>{loadAllAnalyses().then(a=>{setAnalyses(a);setLoading(false);});},[ ]);
+  const del=async key=>{await deleteAnalysis(key);setAnalyses(p=>p.filter(a=>a.key!==key));};
+  if(loading)return React.createElement('div',{style:{textAlign:'center',padding:80,color:'#9CA3AF'}},L('Yükleniyor…','Loading…'));
+  if(!analyses.length)return React.createElement('div',{style:{textAlign:'center',padding:90}},
+    React.createElement('div',{style:{fontSize:48,marginBottom:16}},'📂'),
+    React.createElement('div',{style:{fontFamily:"'Sora',sans-serif",fontSize:18,fontWeight:800,color:'#111827',marginBottom:8}},L('Henüz kayıtlı analiz yok','No saved analyses yet')),
+    React.createElement('div',{style:{fontSize:14,color:'#6B7280'}},L('İlk analizinizi yapın, otomatik kaydedilir.','Run your first analysis — it saves automatically.'))
+  );
+  return React.createElement('div',{style:{maxWidth:980,margin:'0 auto',padding:'32px 24px'},className:'fi'},
+    React.createElement('h1',{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,margin:'0 0 20px',letterSpacing:'-.4px'}},`${L('Analiz Geçmişi','History')} (${analyses.length})`),
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}},
+      analyses.map(a=>{
+        const R=rcfg(a.results?.recommendation),ws=a.results?.weighted_score||0,ex=a.results?.exit_analysis;
+        return React.createElement('div',{key:a.key,style:{background:'white',borderRadius:14,padding:18,boxShadow:'0 1px 3px rgba(0,0,0,.07)',border:'2px solid transparent'}},
+          React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}},
+            React.createElement('div',null,React.createElement('div',{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:15,color:'#111827',marginBottom:3}},a.form?.companyName||'?'),React.createElement('div',{style:{fontSize:11,color:'#9CA3AF'}},`${a.form?.stage||''} · ${new Date(a.savedAt).toLocaleDateString('tr-TR')}`)),
+            React.createElement('div',{style:{textAlign:'right'}},React.createElement('div',{style:{fontSize:24,fontWeight:800,color:sc(ws)}},ws.toFixed(1)),ex?.return_scenarios?.base?.multiple&&React.createElement('div',{style:{fontSize:11,color:'#7C3AED',fontWeight:700}},`${ex.return_scenarios.base.multiple} baz`))
+          ),
+          React.createElement('div',{style:{display:'inline-flex',alignItems:'center',gap:6,background:R.bg,border:`1px solid ${R.b}`,borderRadius:6,padding:'4px 10px',marginBottom:10}},React.createElement('span',{style:{fontSize:11,fontWeight:700,color:R.c}},R.tr)),
+          ex&&React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}},
+            ex.time_to_exit&&React.createElement('span',{style:{fontSize:10,background:'#F5F3FF',color:'#7C3AED',borderRadius:20,padding:'2px 8px',fontWeight:600}},`⏱ ${ex.time_to_exit}`),
+            ex.expected_exit_value&&React.createElement('span',{style:{fontSize:10,background:'#F0FDF4',color:'#059669',borderRadius:20,padding:'2px 8px',fontWeight:600}},`💰 ${ex.expected_exit_value}`)
+          ),
+          React.createElement('div',{style:{display:'flex',gap:8}},
+            React.createElement('button',{onClick:()=>onView(a),style:{flex:1,padding:'7px 0',background:'#F3F4F6',border:'none',borderRadius:7,fontSize:12,fontWeight:600,color:'#374151',cursor:'pointer'}},`👁 ${L('Görüntüle','View')}`),
+            React.createElement('button',{onClick:()=>del(a.key),style:{padding:'7px 12px',background:'#FEF2F2',border:'none',borderRadius:7,fontSize:12,fontWeight:600,color:'#DC2626',cursor:'pointer'}},'🗑')
+          )
+        );
+      })
+    )
+  );
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────
+function App(){
+  
+  const[lang,setLang]=useState('tr');const[step,setStep]=useState('form');
+  const[depth,setDepth]=useState('deep');const[rLang,setRLang]=useState('tr');
+  const[loadIdx,setLoadIdx]=useState(0);const[pdfName,setPdfName]=useState(null);const[pdfB64,setPdfB64]=useState(null);
+  const[isParsing,setIsParsing]=useState(false);const[pptxBusy,setPptxBusy]=useState(false);
+  const[toast,setToast]=useState(null);const[results,setResults]=useState(null);const[historyItem,setHistoryItem]=useState(null);
+  const[form,setForm]=useState({companyName:'',website:'',sector:'',country:'Türkiye',foundedYear:'',stage:'Seed',round:'Pre-Seed',description:'',problem:'',arr:'',mrr:'',burnRate:'',runway:'',arpu:'',cac:'',ltv:'',preMoneyVal:'',postMoneyVal:'',askAmount:'',founders:[{name:'',role:'CEO',linkedin:''},{name:'',role:'CTO',linkedin:''}],competitors:'',capTable:''});
+  const[error,setError]=useState(null);
+  const fileRef=useRef(null);const loadTimer=useRef(null);
+
+  useEffect(()=>{if(step==='analyzing'){let i=0;loadTimer.current=setInterval(()=>{i=(i+1)%7;setLoadIdx(i);},2600);}return()=>clearInterval(loadTimer.current);},[step]);
+
+  const L=(a,b)=>lang==='tr'?a:b;
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
+  const upd=k=>v=>setForm(p=>({...p,[k]:v}));
+  const updF=(i,k)=>v=>setForm(p=>({...p,founders:p.founders.map((f,idx)=>idx===i?{...f,[k]:v}:f)}));
+
+  const handleFile=e=>{const f=e.target.files[0];if(!f)return;setPdfName(f.name);const r=new FileReader();r.onload=()=>setPdfB64(r.result.split(',')[1]);r.readAsDataURL(f);};
+  const handleParsePdf=async()=>{if(!pdfB64)return;setIsParsing(true);setError(null);try{const p=await parsePdf(pdfB64);if(p){setForm(prev=>({...prev,...Object.fromEntries(Object.entries(p).filter(([k,v])=>k!=='founders'&&v)),founders:p.founders?.filter(f=>f.name).length?p.founders:prev.founders}));showToast(L('✅ PDF okundu!','✅ PDF parsed!'));}}catch(e){setError(e.message);}setIsParsing(false);};
+
+  const handleAnalyze=async()=>{
+    if(!form.companyName.trim())return;
+    setError(null);setStep('analyzing');setLoadIdx(0);
+    try{
+      const prompt=buildPrompt(form,depth,rLang);
+      const mArr=[{role:'user',content:pdfB64?[{type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfB64}},{type:'text',text:prompt}]:[{type:'text',text:prompt}]}];
+      const raw=await callClaude(mArr,depth==='deep');
+      const json=JSON.parse(raw.replace(/```json|```/g,'').trim());
+      setResults(json);setStep('results');
+      await saveAnalysis(form,json);showToast(L('✅ Analiz kaydedildi!','✅ Saved!'));
+    }catch(e){setError(e.message);setStep('form');}
+  };
+
+  const handlePptx=async(res,frm)=>{
+    const r=res||results,f=frm||form;if(!r)return;
+    setPptxBusy(true);try{await generatePptx(r,f);showToast(L('✅ PPTX indirildi!','✅ Downloaded!'));}catch(e){setError(e.message);}setPptxBusy(false);
+  };
+
+  const navBtn=(label,active,onClick)=>React.createElement('button',{onClick,style:{fontSize:13,fontWeight:active?700:500,color:active?'#111827':'#6B7280',background:active?'#F3F4F6':'none',border:'none',borderRadius:8,padding:'6px 14px',cursor:'pointer'}},label);
+
+  
+
+  const header=React.createElement('header',{style:{background:'white',borderBottom:'1px solid #E5E7EB',height:58,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 24px',position:'sticky',top:0,zIndex:100}},
+    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
+      React.createElement('svg',{width:28,height:28,viewBox:'0 0 28 28',fill:'none'},React.createElement('rect',{width:28,height:28,rx:7,fill:'#111827'}),React.createElement('path',{d:'M8 20L14 8L20 20',stroke:'#F9FAFB',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'}),React.createElement('path',{d:'M10 16H18',stroke:'#2563EB',strokeWidth:2.2,strokeLinecap:'round'})),
+      React.createElement('div',null,React.createElement('div',{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:16,letterSpacing:'-.3px',lineHeight:1}},'Angel Lens'),React.createElement('div',{style:{fontSize:10,color:'#9CA3AF'}},'Melek Yatırımcı Platformu'))
+    ),
+    React.createElement('div',{style:{display:'flex',gap:4,alignItems:'center'}},
+      navBtn(L('📝 Yeni Analiz','📝 New'),step==='form'||step==='analyzing',()=>{setStep('form');setResults(null);setError(null);setHistoryItem(null);}),
+      navBtn(L('📂 Geçmiş','📂 History'),step==='history',()=>{setStep('history');setHistoryItem(null);}),
+      React.createElement('div',{style:{width:1,height:18,background:'#E5E7EB',margin:'0 4px'}}),
+      React.createElement('button',{onClick:()=>setLang(l=>l==='tr'?'en':'tr'),style:{fontSize:12,fontWeight:700,background:'#F3F4F6',border:'none',borderRadius:7,padding:'6px 11px',cursor:'pointer',color:'#374151'}},lang==='tr'?'EN':'TR'),
+      
+    )
+  );
+
+  const toastEl=toast&&React.createElement('div',{className:'toast'},toast);
+
+  if(step==='form')return React.createElement('div',null,header,toastEl,
+    React.createElement('div',{style:{maxWidth:820,margin:'0 auto',padding:'32px 24px'},className:'fi'},
+      React.createElement('div',{style:{marginBottom:22}},React.createElement('h1',{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:800,margin:'0 0 5px',letterSpacing:'-.4px'}},L('Startup Değerlendirmesi','Startup Evaluation')),React.createElement('p',{style:{margin:0,color:'#6B7280',fontSize:14}},L('Pitch deck yükleyin veya bilgileri girin. Exit analizi dahil tam rapor üretilir.','Upload pitch deck or fill details. Full report including exit analysis.'))),
+      error&&React.createElement('div',{style:{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:10,padding:'11px 15px',marginBottom:16,color:'#DC2626',fontSize:13}},`⚠️ ${error}`),
+      React.createElement('div',{className:'card'},React.createElement('div',{className:'st'},`📎 ${L('Pitch Deck (Opsiyonel)','Pitch Deck (Optional)')}`),
+        React.createElement('div',{onClick:()=>fileRef.current?.click(),style:{border:`2px dashed ${pdfName?'#059669':'#D1D5DB'}`,borderRadius:10,padding:18,textAlign:'center',cursor:'pointer',background:pdfName?'#F0FDF4':'#F9FAFB'}},
+          React.createElement('input',{ref:fileRef,type:'file',accept:'.pdf',onChange:handleFile,style:{display:'none'}}),
+          pdfName?React.createElement('div',null,React.createElement('div',{style:{fontSize:22,marginBottom:3}},'✅'),React.createElement('div',{style:{fontWeight:700,color:'#059669',fontSize:14}},pdfName)):React.createElement('div',null,React.createElement('div',{style:{fontSize:28,marginBottom:3}},'📄'),React.createElement('div',{style:{color:'#6B7280',fontSize:13}},L('PDF sürükle bırak veya tıkla','Drag & drop or click — PDF')))
+        ),
+        pdfB64&&React.createElement('button',{onClick:handleParsePdf,disabled:isParsing,style:{marginTop:11,width:'100%',padding:10,background:isParsing?'#E5E7EB':'#EFF6FF',color:isParsing?'#9CA3AF':'#2563EB',border:'1.5px solid #BFDBFE',borderRadius:9,cursor:isParsing?'not-allowed':'pointer',fontWeight:700,fontSize:14}},isParsing?'⏳ Okunuyor…':'✨ PDF\'den Otomatik Doldur')
+      ),
+      React.createElement('div',{className:'card'},React.createElement('div',{className:'st'},`🏢 ${L('Şirket Bilgileri','Company Information')}`),
+        React.createElement('div',{className:'g2'},
+          ...[['companyName',L('Şirket Adı *','Company Name *'),'Sensible Stats'],['website','Website','https://…'],['sector',L('Sektör','Sector'),'Sports Analytics / AI'],['country',L('Ülke','Country'),'Türkiye'],['foundedYear',L('Kuruluş Yılı','Founded'),'2024']].map(([k,lbl,ph])=>React.createElement('div',{key:k},React.createElement('div',{className:'lbl'},lbl),React.createElement('input',{className:'inp',value:form[k],onChange:e=>upd(k)(e.target.value),placeholder:ph}))),
+          React.createElement('div',null,React.createElement('div',{className:'lbl'},L('Aşama','Stage')),React.createElement('select',{className:'sel',value:form.stage,onChange:e=>upd('stage')(e.target.value)},['Pre-Seed','Seed','Series A','Series B','Series C+'].map(o=>React.createElement('option',{key:o,value:o},o))))
+        ),
+        React.createElement('div',{style:{marginTop:12}},React.createElement('div',{className:'lbl'},L('Açıklama','Description')),React.createElement('textarea',{className:'ta',rows:2,value:form.description,onChange:e=>upd('description')(e.target.value),placeholder:L('Şirket ne yapıyor?','What does it do?')})),
+        React.createElement('div',{style:{marginTop:10}},React.createElement('div',{className:'lbl'},L('Problem','Problem')),React.createElement('textarea',{className:'ta',rows:2,value:form.problem,onChange:e=>upd('problem')(e.target.value),placeholder:L('Hangi problemi çözüyor?','What problem does it solve?')}))
+      ),
+      React.createElement('div',{className:'card'},React.createElement('div',{className:'st'},`👥 ${L('Kurucu Ekip','Founding Team')}`),
+        form.founders.map((f,i)=>React.createElement('div',{key:i,style:{background:'#F9FAFB',borderRadius:10,padding:12,marginBottom:10,position:'relative'}},
+          React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 90px 1.4fr',gap:10}},
+            React.createElement('div',null,React.createElement('div',{className:'lbl'},L('İsim','Name')),React.createElement('input',{className:'inp',value:f.name,onChange:e=>updF(i,'name')(e.target.value),placeholder:'Ad Soyad'})),
+            React.createElement('div',null,React.createElement('div',{className:'lbl'},'Rol'),React.createElement('input',{className:'inp',value:f.role,onChange:e=>updF(i,'role')(e.target.value),placeholder:'CEO'})),
+            React.createElement('div',null,React.createElement('div',{className:'lbl'},'LinkedIn'),React.createElement('input',{className:'inp',value:f.linkedin,onChange:e=>updF(i,'linkedin')(e.target.value),placeholder:'https://linkedin.com/in/…'}))
+          ),
+          form.founders.length>1&&React.createElement('button',{onClick:()=>setForm(p=>({...p,founders:p.founders.filter((_,idx)=>idx!==i)})),style:{position:'absolute',top:8,right:10,background:'none',border:'none',cursor:'pointer',color:'#9CA3AF',fontSize:15}},'✕')
+        )),
+        form.founders.length<5&&React.createElement('button',{onClick:()=>setForm(p=>({...p,founders:[...p.founders,{name:'',role:'',linkedin:''}]})),style:{fontSize:13,color:'#2563EB',background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:8,padding:'7px 14px',cursor:'pointer',fontWeight:600}},`+ ${L('Kurucu Ekle','Add Founder')}`)
+      ),
+      React.createElement('div',{className:'card'},React.createElement('div',{className:'st'},`💰 ${L('Finansal Metrikler','Financials')}`),
+        React.createElement('div',{className:'g3'},
+          ...[['arr','ARR ($)','120,000'],['mrr','MRR ($)','10,000'],['burnRate','Burn/ay ($)','25,000'],['runway','Runway (ay)','18'],['arpu','ARPU ($)','10'],['cac','CAC ($)','50'],['ltv','LTV ($)','200'],['preMoneyVal','Pre-Money ($)','5,000,000'],['askAmount',L('Aranan Yatırım ($)','Funding Ask ($)'),'500,000']].map(([k,lbl,ph])=>React.createElement('div',{key:k},React.createElement('div',{className:'lbl'},lbl),React.createElement('input',{className:'inp',value:form[k],onChange:e=>upd(k)(e.target.value),placeholder:ph})))
+        )
+      ),
+      React.createElement('div',{className:'card'},React.createElement('div',{className:'st'},`🔍 ${L('Ek Bilgiler','Additional Info')}`),
+        React.createElement('div',null,React.createElement('div',{className:'lbl'},L('Rakipler','Competitors')),React.createElement('textarea',{className:'ta',rows:2,value:form.competitors,onChange:e=>upd('competitors')(e.target.value),placeholder:'FBref, WhoScored, Sofascore…'})),
+        React.createElement('div',{style:{marginTop:10}},React.createElement('div',{className:'lbl'},'Cap Table'),React.createElement('textarea',{className:'ta',rows:2,value:form.capTable,onChange:e=>upd('capTable')(e.target.value),placeholder:L('Kurucular %80…','Founders 80%…')}))
+      ),
+      React.createElement('div',{className:'card'},React.createElement('div',{className:'st'},`⚙️ ${L('Analiz Ayarları','Settings')}`),
+        React.createElement('div',{style:{display:'flex',gap:26,flexWrap:'wrap'}},
+          React.createElement('div',null,React.createElement('div',{className:'lbl'},L('DERİNLİK','DEPTH')),React.createElement('div',{style:{display:'flex',gap:8,marginTop:5}},[['fast',L('⚡ Hızlı','⚡ Fast')],['deep',L('🔬 Derin','🔬 Deep')]].map(([v,lbl])=>React.createElement('button',{key:v,onClick:()=>setDepth(v),className:`tog${depth===v?' on':''}`},lbl)))),
+          React.createElement('div',null,React.createElement('div',{className:'lbl'},L('RAPOR DİLİ','REPORT LANG')),React.createElement('div',{style:{display:'flex',gap:8,marginTop:5}},[['tr','🇹🇷 Türkçe'],['en','🇬🇧 English']].map(([v,lbl])=>React.createElement('button',{key:v,onClick:()=>setRLang(v),className:`tog${rLang===v?' on':''}`},lbl))))
+        )
+      ),
+      React.createElement('button',{className:'btn-p',onClick:handleAnalyze,disabled:!form.companyName.trim()},L('🚀 Analizi Başlat','🚀 Start Analysis'))
+    )
+  );
+
+  if(step==='analyzing')return React.createElement('div',null,header,
+    React.createElement('div',{style:{maxWidth:460,margin:'80px auto',padding:'0 24px',textAlign:'center'},className:'fi'},
+      React.createElement('div',{style:{width:68,height:68,borderRadius:'50%',background:'#111827',margin:'0 auto 22px',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28}},'🔍'),
+      React.createElement('h2',{style:{fontFamily:"'Sora',sans-serif",fontSize:21,fontWeight:800,margin:'0 0 10px',letterSpacing:'-.3px'}},L('Analiz Yapılıyor…','Analyzing…')),
+      React.createElement('p',{style:{color:'#6B7280',fontSize:14,margin:'0 0 24px',lineHeight:1.6,minHeight:44}},LOADING[lang][loadIdx]),
+      React.createElement('div',{style:{background:'#E5E7EB',borderRadius:6,height:5,overflow:'hidden'}},React.createElement('div',{style:{height:'100%',width:`${(loadIdx+1)/7*100}%`,background:'#111827',borderRadius:6,transition:'width .5s ease'}})),
+      React.createElement('div',{style:{marginTop:9,fontSize:12,color:'#9CA3AF'}},`${loadIdx+1} / 7`)
+    )
+  );
+
+  if(step==='results'&&results)return React.createElement('div',null,header,toastEl,React.createElement(ResultsView,{results,form,lang,onPptx:()=>handlePptx(results,form),pptxBusy}));
+  if(step==='history'&&!historyItem)return React.createElement('div',null,header,toastEl,React.createElement(HistoryView,{lang,onView:a=>setHistoryItem(a)}));
+  if(step==='history'&&historyItem)return React.createElement('div',null,header,toastEl,
+    React.createElement('div',{style:{maxWidth:980,margin:'0 auto',padding:'32px 24px'}},
+      React.createElement('button',{onClick:()=>setHistoryItem(null),style:{marginBottom:18,background:'none',border:'1px solid #E5E7EB',borderRadius:8,padding:'6px 14px',fontSize:13,color:'#6B7280',cursor:'pointer'}},`↩ ${L('Geçmişe Dön','Back')}`),
+      React.createElement(ResultsView,{results:historyItem.results,form:historyItem.form,lang,onPptx:()=>handlePptx(historyItem.results,historyItem.form),pptxBusy})
+    )
+  );
+  return React.createElement('div',null,header);
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
