@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Angel Lens</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0F2744;--blue:#1D4ED8;--blue-light:#EFF6FF;--blue-mid:#BFDBFE;--gray-50:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;--gray-300:#CBD5E1;--gray-400:#94A3B8;--gray-500:#64748B;--gray-700:#334155;--gray-900:#0F172A;--green:#059669;--green-light:#ECFDF5;--amber:#B45309;--amber-light:#FFFBEB;--red:#DC2626;--red-light:#FEF2F2;--purple:#6D28D9;--purple-light:#F5F3FF}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--gray-50);color:var(--gray-900);font-size:14px;line-height:1.6}
+input,textarea,select,button{font-family:'Inter',sans-serif}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--gray-100)}::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px}
+.inp{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;color:var(--gray-900);background:white;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+.ta{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;color:var(--gray-900);background:white;outline:none;resize:vertical;line-height:1.6}
+.ta:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(29,78,216,.08)}
+.sel{width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px;color:var(--gray-900);background:white;outline:none}
+.card{background:white;border-radius:8px;padding:24px;border:1px solid var(--gray-200);margin-bottom:16px}
+.sec{font-size:11px;font-weight:600;color:var(--gray-400);letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--gray-100)}
+.lbl{font-size:11px;font-weight:600;color:var(--gray-500);letter-spacing:.5px;margin-bottom:5px;text-transform:uppercase}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.btn-primary{width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:#1e40af}
+.btn-primary:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed}
+.tog{padding:7px 14px;border-radius:6px;font-weight:500;font-size:13px;cursor:pointer;border:1px solid var(--gray-200);background:white;color:var(--gray-500);transition:all .15s}
+.tog.on{border-color:var(--blue);background:var(--blue-light);color:var(--blue);font-weight:600}
+.bt{height:4px;background:var(--gray-100);border-radius:2px;overflow:hidden;margin-top:5px}
+.bf{height:100%;border-radius:2px;transition:width 1.1s cubic-bezier(.22,1,.36,1)}
+.err{background:var(--red-light);border:1px solid #FECACA;border-radius:6px;padding:11px 14px;margin-bottom:14px;color:var(--red);font-size:13px}
+.toast{position:fixed;top:66px;right:20px;background:var(--navy);color:white;padding:10px 18px;border-radius:6px;font-weight:500;font-size:13px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.15);animation:ts .25s ease}
+@keyframes ts{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .3s ease}
+.header{background:var(--navy);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo-text{color:white;font-weight:700;font-size:16px;letter-spacing:-.2px}
+.logo-sub{color:rgba(255,255,255,.4);font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+.nav-btn{font-size:13px;color:rgba(255,255,255,.55);background:none;border:none;padding:6px 14px;cursor:pointer;border-radius:5px;font-weight:500;transition:all .15s}
+.nav-btn:hover{color:white;background:rgba(255,255,255,.08)}
+.lang-btn{font-size:12px;font-weight:600;color:rgba(255,255,255,.55);background:none;border:1px solid rgba(255,255,255,.15);border-radius:5px;padding:5px 11px;cursor:pointer;transition:all .15s}
+.lang-btn:hover{color:white;border-color:rgba(255,255,255,.35)}
+.kpi{background:white;border:1px solid var(--gray-200);border-radius:8px;padding:18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue)}
+.kpi-lbl{font-size:10px;font-weight:600;color:var(--gray-400);letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px}
+.kpi-val{font-size:18px;font-weight:700;color:var(--gray-900);line-height:1.3}
+.score-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--gray-100)}
+.q-card{border-left:3px solid var(--blue);padding:14px 16px;background:var(--gray-50);border-radius:0 6px 6px 0;margin-bottom:12px}
+@media print{.header,[data-np]{display:none!important}body{background:white}.card{border:1px solid #ddd;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const {useState,useEffect,useRef}=React;
+const h=React.createElement;
+const VC=[{id:'market',tr:'Pazar Değerlendirmesi',en:'Market Assessment',w:15},{id:'competitive',tr:'Rekabet Avantajı',en:'Competitive Advantage',w:20},{id:'financial',tr:'Finansal Profil',en:'Financial Profile',w:15},{id:'management',tr:'Yönetim',en:'Management',w:20},{id:'valuation',tr:'Şirket Değeri',en:'Valuation',w:10},{id:'governance',tr:'Denetim & Kontrol',en:'Governance',w:5},{id:'value_creation',tr:'Değer Yaratma',en:'Value Creation',w:5},{id:'exit',tr:'Çıkış Fırsatları',en:'Exit Opportunities',w:10}];
+const AG=[{id:'founder_fit',tr:'Founder-Market Fit',en:'Founder-Market Fit',w:0},{id:'network',tr:'Kişisel Ağ Değeri',en:'Personal Network Value',w:0}];
+const MSGS={tr:['Pitch deck metni çözümleniyor…','Kurucu profilleri inceleniyor…','Pazar ve sektör araştırılıyor…','Rakip ekosistemi analiz ediliyor…','VC 8 Kriteri uygulanıyor…','Exit senaryoları hesaplanıyor…','Kapsamlı rapor derleniyor…'],en:['Parsing pitch deck…','Reviewing founder profiles…','Researching market data…','Analyzing competitive landscape…','Applying VC 8 Criteria…','Calculating exit scenarios…','Compiling comprehensive report…']};
+const scColor=s=>s>=7.5?'#059669':s>=6?'#B45309':s>=4.5?'#C2410C':'#DC2626';
+const scHex=s=>s>=7.5?'059669':s>=6?'B45309':s>=4.5?'C2410C':'DC2626';
+const REC={pass:{tr:'GEÇ',en:'PASS',bg:'#FEF2F2',c:'#DC2626',bc:'#FECACA'},watch:{tr:'İZLE',en:'WATCH',bg:'#FFFBEB',c:'#B45309',bc:'#FDE68A'},meeting:{tr:'TOPLANTI AL',en:'TAKE MEETING',bg:'#EFF6FF',c:'#1D4ED8',bc:'#BFDBFE'},diligence:{tr:'DERİN İNCELEME',en:'DEEP DILIGENCE',bg:'#ECFDF5',c:'#059669',bc:'#A7F3D0'}};
+const rcfg=r=>REC[r]||REC.meeting;
+
+const VC8=`GİRİŞİM SERMAYESİ FONLARININ 8 KRİTERİ:
+1.PAZAR: Büyümeye açık, talep yüksek, rekabet uygun, şeffaf ve cazip pazar mı? Regülasyon riski?
+2.REKABET AVANTAJI: Pazar liderleri ve konumları? Sürdürülebilir rekabet avantajı var mı?
+3.FİNANSAL PROFİL: Finansal yapı büyümeyi taşıyacak güçte mi? Unit economics?
+4.YÖNETİM: Ekip yetkinliği, execution geçmişi, kritik açıklar, kurucu motivasyonu?
+5.ŞİRKET DEĞERİ: Değerleme piyasa koşullarına makul mü? Hedeflenen getiri tutarlı mı?
+6.DENETİM&KONTROL: Yönetim denetimi, board yapısı, azınlık hakları?
+7.DEĞER YARATMA: Sermaye dışı katkı, fon network değeri, portföy sinerjisi?
+8.ÇIKIŞ: Uygun çıkış yolu, potansiyel alıcılar, benzer M&A işlemleri?
+ANGEL EK KRİTERLER:
+9.FOUNDER-MARKET FIT: Kurucular bu problemi çözmek için neden ideal konumda? Domain expertise, motivasyon?
+10.KİŞİSEL AĞ DEĞERİ: Angel yatırımcının kendi ağıyla bu girişime ne katma değer sağlayabileceği?`;
+
+function buildPrompt(form,lang){
+  const founders=form.founders.filter(f=>f.name).map(f=>`- ${f.name} (${f.role||'?'})${f.linkedin?' | '+f.linkedin:''}`).join('\n')||'- Belirtilmemiş';
+  return `Sen hem üst düzey bir Venture Capital General Partner'ı, hem de deneyimli bir Angel Investor'sın. Aşağıdaki startup'ı kapsamlı ve derinlikli olarak değerlendir.
+
+## STARTUP
+Şirket: ${form.companyName||'?'} | Website: ${form.website||'?'} | Sektör: ${form.sector||'?'} | Ülke: ${form.country||'?'} | Kuruluş: ${form.foundedYear||'?'} | Aşama: ${form.stage} | Tur: ${form.round||'?'}
+Açıklama: ${form.description||'?'}
+Problem: ${form.problem||'?'}
+Kurucular:\n${founders}
+Finansallar: ARR=${form.arr||'?'} MRR=${form.mrr||'?'} Burn=${form.burnRate||'?'}/ay Runway=${form.runway||'?'}ay ARPU=${form.arpu||'?'} CAC=${form.cac||'?'} LTV=${form.ltv||'?'}
+Değerleme: Pre-Money=${form.preMoneyVal||'?'} Ask=${form.askAmount||'?'}
+Rakipler: ${form.competitors||'?'}
+Cap Table: ${form.capTable||'?'}
+
+## ÇERÇEVE
+${VC8}
+
+## GÖREV
+Kapsamlı angel yatırımcı değerlendirmesi yap. Somut verilerle desteklenmiş, doyurucu ve derinlikli analiz üret.
+SADECE geçerli JSON döndür. Dil: ${lang==='tr'?'Türkçe':'English'}. Puanlar 0.0-10.0.
+
+{"scores":{"market":{"score":0.0,"note":"2-3 cümle","pros":["p1","p2","p3"],"cons":["c1","c2"]},"competitive":{"score":0.0,"note":"","pros":[],"cons":[]},"financial":{"score":0.0,"note":"","pros":[],"cons":[]},"management":{"score":0.0,"note":"","pros":[],"cons":[]},"valuation":{"score":0.0,"note":"","pros":[],"cons":[]},"governance":{"score":0.0,"note":"","pros":[],"cons":[]},"value_creation":{"score":0.0,"note":"","pros":[],"cons":[]},"exit":{"score":0.0,"note":"","pros":[],"cons":[]},"founder_fit":{"score":0.0,"note":"","pros":[],"cons":[]},"network":{"score":0.0,"note":"","pros":[],"cons":[]}},"weighted_score":0.0,"unweighted_score":0.0,"recommendation":"pass|watch|meeting|diligence","confidence":"low|medium|high","executive_summary":"4-5 cümle kapsamlı özet","investment_recommendation":"2-3 cümle net tavsiye","company_analysis":{"what_they_do":"ürün açıklaması","problem_solution":"problem ve çözüm","business_model":"iş modeli","painkiller_vitamin":"painkiller mı vitamin mi ve neden","product_stage":"ürün olgunluk aşaması"},"market_analysis":{"tam":"TAM tanımı ve tahmini büyüklük","sam":"SAM tahmini","som":"SOM 3-5 yıl","growth_drivers":["d1","d2","d3"],"headwinds":["h1","h2"]},"competitive_analysis":{"summary":"rekabet özeti","moat_assessment":"moat değerlendirmesi","differentiators":["d1","d2","d3"],"vulnerabilities":["v1","v2"]},"team_assessment":{"overall":"ekip genel değerlendirme","strengths":["s1","s2","s3"],"gaps":["g1","g2"],"founder_market_fit_detail":"founder-market fit detayı"},"bull_case":["g1","g2","g3","g4","g5"],"bear_case":["r1","r2","r3","r4","r5"],"exit_analysis":{"entry_valuation":"değer","expected_exit_value":"aralık","time_to_exit":"süre","exit_routes":[{"route":"Stratejik M&A","priority":1,"probability":"Yüksek","notes":"açıklama"},{"route":"Finansal Sponsor","priority":2,"probability":"Orta","notes":""}],"return_scenarios":{"bear":{"multiple":"1.5x","irr":"8% IRR","exit_value":"değer","exit_year":"yıl","rationale":"gerekçe"},"base":{"multiple":"4x","irr":"25% IRR","exit_value":"değer","exit_year":"yıl","rationale":"gerekçe"},"bull":{"multiple":"8x","irr":"45% IRR","exit_value":"değer","exit_year":"yıl","rationale":"gerekçe"}},"exit_candidates":[{"name":"Alıcı 1","type":"Stratejik","motivation":"gerekçe","likelihood":"Yüksek"},{"name":"Alıcı 2","type":"Stratejik","motivation":"","likelihood":"Orta"},{"name":"Alıcı 3","type":"Finansal","motivation":"","likelihood":"Orta"},{"name":"Alıcı 4","type":"Stratejik","motivation":"","likelihood":"Düşük"}],"comparable_exits":[{"company":"Şirket","value":"$XXM","year":"202X","acquirer":"Alıcı","ev_multiple":"~Xx"},{"company":"Şirket 2","value":"$XXM","year":"202X","acquirer":"Alıcı","ev_multiple":"~Xx"}],"key_risks":"exit risk özeti"},"risks":[{"category":"Pazar","description":"","severity":"high","early_warning":"","test":"","mitigant":""},{"category":"Ürün","description":"","severity":"medium","early_warning":"","test":"","mitigant":""},{"category":"Teknik","description":"","severity":"medium","early_warning":"","test":"","mitigant":""},{"category":"Rekabet","description":"","severity":"high","early_warning":"","test":"","mitigant":""},{"category":"GTM","description":"","severity":"medium","early_warning":"","test":"","mitigant":""},{"category":"Finansman","description":"","severity":"medium","early_warning":"","test":"","mitigant":""}],"questions":[{"category":"Ürün","star":true,"question":"soru","good_answer":"","red_flag":""},{"category":"Teknoloji","star":true,"question":"soru","good_answer":"","red_flag":""},{"category":"Traction","star":true,"question":"soru","good_answer":"","red_flag":""},{"category":"Rekabet","star":false,"question":"soru","good_answer":"","red_flag":""},{"category":"Kurucu","star":false,"question":"soru","good_answer":"","red_flag":""},{"category":"GTM","star":false,"question":"soru","good_answer":"","red_flag":""},{"category":"Finansman","star":false,"question":"soru","good_answer":"","red_flag":""}],"scenarios":{"bull":{"label":"İyi Durum","score":0.0,"description":"","conditions":["k1","k2","k3"]},"base":{"label":"Baz Senaryo","score":0.0,"description":"","conditions":["k1","k2"]},"bear":{"label":"Kötü Durum","score":0.0,"description":"","conditions":["k1","k2"]}},"metrics_to_watch":[{"metric":"metrik","threshold":"eşik","why":"neden"},{"metric":"","threshold":"","why":""},{"metric":"","threshold":"","why":""},{"metric":"","threshold":"","why":""}],"breakout_conditions":["k1","k2","k3","k4"],"key_question":"tek soru","next_steps":["adım1","adım2","adım3"]}`;
+}
+
+async function callAPI(msgs){
+  const body={model:'claude-sonnet-4-20250514',max_tokens:8000,messages:msgs};
+  const res=await fetch('/api/proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok){const t=await res.text();throw new Error('Hata '+res.status+': '+t.slice(0,200));}
+  const d=await res.json();
+  if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));
+  if(d.stop_reason==='tool_use'){const tr=d.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:'ok'}));return callAPI([...msgs,{role:'assistant',content:d.content},{role:'user',content:tr}]);}
+  return d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+
+async function extractTextFromPDF(b64){
+  return new Promise(resolve=>{
+    if(window.pdfjsLib){doParse();return;}
+    const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';doParse();};
+    s.onerror=()=>resolve('');document.head.appendChild(s);
+    async function doParse(){try{const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const pdf=await window.pdfjsLib.getDocument({data:bytes}).promise;let text='';for(let i=1;i<=Math.min(pdf.numPages,20);i++){const page=await pdf.getPage(i);const content=await page.getTextContent();text+=content.items.map(s=>s.str).join(' ')+'\n';}resolve(text.slice(0,10000));}catch{resolve('');}}
+  });
+}
+async function parsePDF(b64){
+  const pdfText=await extractTextFromPDF(b64);if(!pdfText)throw new Error('PDF metni okunamadı');
+  const t=await callAPI([{role:'user',content:[{type:'text',text:`Bu pitch deck metninden startup bilgilerini çıkar:\n${pdfText}\n\nSADECE JSON döndür: {"companyName":"","website":"","sector":"","country":"","foundedYear":"","stage":"Seed","round":"","description":"","problem":"","arr":"","mrr":"","burnRate":"","runway":"","arpu":"","cac":"","ltv":"","preMoneyVal":"","postMoneyVal":"","askAmount":"","founders":[{"name":"","role":"","linkedin":""}],"competitors":"","capTable":""}`}]}]);
+  return JSON.parse(t.replace(/```json|```/g,'').trim());
+}
+
+async function generatePPTX(results,form,lang){
+  if(!window.PptxGenJS){await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+  const pptx=new window.PptxGenJS();pptx.layout='LAYOUT_16x9';pptx.title=`${form.companyName||'Startup'} - Angel Lens`;
+  const N='0F2744',B='1D4ED8',W='FFFFFF',G='94A3B8',LG='F8FAFC',DG='334155';
+  const ws=results.weighted_score||0;const rec=rcfg(results.recommendation);
+  const recColorMap={'#DC2626':'DC2626','#B45309':'B45309','#1D4ED8':'1D4ED8','#059669':'059669'};
+  const rCol=recColorMap[rec.c]||'1D4ED8';
+  const ex=results.exit_analysis||{};
+  // SL1 Cover
+  let sl=pptx.addSlide();sl.background={color:N};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:.26,h:5.625,fill:{color:B}});
+  sl.addText('ANGEL LENS',{x:.48,y:.4,w:4,h:.26,fontSize:8,color:G,bold:true,charSpacing:5});
+  sl.addText(form.companyName||'Şirket',{x:.48,y:.8,w:8.5,h:1.0,fontSize:40,color:W,bold:true,fontFace:'Palatino'});
+  sl.addText(`${form.sector||''} · ${form.stage} · ${new Date().toLocaleDateString('tr-TR',{month:'long',year:'numeric'})}`,{x:.48,y:1.82,w:7,h:.3,fontSize:11,color:G});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.48,y:2.28,w:1.58,h:1.52,fill:{color:'1E3A5F'}});
+  sl.addText(ws.toFixed(1),{x:.48,y:2.34,w:1.58,h:.88,fontSize:36,color:scHex(ws),bold:true,align:'center'});
+  sl.addText('/10',{x:.48,y:3.18,w:1.58,h:.28,fontSize:10,color:G,align:'center'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:2.3,y:2.52,w:2.52,h:.55,fill:{color:rCol}});
+  sl.addText(lang==='tr'?rec.tr:rec.en,{x:2.3,y:2.52,w:2.52,h:.55,fontSize:11,color:W,bold:true,align:'center',valign:'middle'});
+  sl.addText(results.executive_summary||'',{x:.48,y:3.78,w:9.2,h:1.3,fontSize:11,color:'CBD5E1',wrap:true,lineSpacingMultiple:1.4});
+  // SL2 Kriterler
+  sl=pptx.addSlide();sl.background={color:LG};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.5,fill:{color:N}});
+  sl.addText(lang==='tr'?'VC 8 KRİTERİ & ANGEL KRİTERLERİ':'VC 8 CRITERIA & ANGEL CRITERIA',{x:.4,y:0,w:9,h:.5,fontSize:12,color:W,bold:true,valign:'middle'});
+  [...VC,...AG].forEach((c,i)=>{if(i>=10)return;const s=results.scores?.[c.id]?.score||0,col=scHex(s),y=.65+i*.44;sl.addText(lang==='tr'?c.tr:c.en,{x:.3,y,w:2.8,h:.32,fontSize:10,color:DG,valign:'middle'});if(c.w>0)sl.addText(`×${c.w}%`,{x:3.15,y:y+.05,w:.4,h:.22,fontSize:8,color:G,align:'center'});sl.addShape(pptx.shapes.RECTANGLE,{x:3.65,y:y+.09,w:5.5,h:.15,fill:{color:'E2E8F0'}});const bw=(s/10)*5.5;if(bw>.01)sl.addShape(pptx.shapes.RECTANGLE,{x:3.65,y:y+.09,w:bw,h:.15,fill:{color:col}});sl.addText(s.toFixed(1),{x:9.28,y,w:.48,h:.32,fontSize:11,color:col,bold:true,align:'right',valign:'middle'});});
+  // SL3 Exit
+  sl=pptx.addSlide();sl.background={color:LG};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.5,fill:{color:N}});
+  sl.addText(lang==='tr'?'EXIT ANALİZİ & GETİRİ SENARYOLARI':'EXIT ANALYSIS & RETURN SCENARIOS',{x:.4,y:0,w:9,h:.5,fontSize:12,color:W,bold:true,valign:'middle'});
+  [[lang==='tr'?'Giriş Değeri':'Entry Val.',ex.entry_valuation||'—'],[lang==='tr'?'Hedef Exit':'Target Exit',ex.expected_exit_value||'—'],[lang==='tr'?'Exit Süresi':'Time to Exit',ex.time_to_exit||'—'],[lang==='tr'?'Baz Getiri':'Base Return',ex.return_scenarios?.base?.multiple||'—']].forEach(([l,v],i)=>{const x=.28+i*2.42;sl.addShape(pptx.shapes.RECTANGLE,{x,y:.66,w:2.2,h:1.05,fill:{color:W}});sl.addShape(pptx.shapes.RECTANGLE,{x,y:.66,w:2.2,h:.04,fill:{color:B}});sl.addText(l,{x,y:.74,w:2.2,h:.26,fontSize:9,color:G,align:'center',bold:true});sl.addText(v,{x,y:.98,w:2.2,h:.58,fontSize:18,color:N,bold:true,align:'center',valign:'middle'});});
+  [['BEAR',ex.return_scenarios?.bear,'DC2626'],['BAZ',ex.return_scenarios?.base,'B45309'],['BULL',ex.return_scenarios?.bull,'059669']].forEach(([lbl,s,col],i)=>{if(!s)return;const x=.28+i*3.18;sl.addShape(pptx.shapes.RECTANGLE,{x,y:1.86,w:2.92,h:1.52,fill:{color:LG}});sl.addShape(pptx.shapes.RECTANGLE,{x,y:1.86,w:2.92,h:.28,fill:{color:col}});sl.addText(lbl,{x,y:1.86,w:2.92,h:.28,fontSize:10,color:W,bold:true,align:'center',valign:'middle'});sl.addText(`${s.multiple||'?x'}`,{x,y:2.17,w:2.92,h:.52,fontSize:24,color:col,bold:true,align:'center'});sl.addText(s.irr||'',{x,y:2.68,w:2.92,h:.22,fontSize:10,color:G,align:'center'});sl.addText(s.rationale||'',{x,y:2.92,w:2.92,h:.38,fontSize:9,color:DG,wrap:true,align:'center'});});
+  sl.addText(lang==='tr'?'POTANSIYEL ALICILAR':'POTENTIAL ACQUIRERS',{x:.28,y:3.52,w:9,h:.22,fontSize:9,color:G,bold:true,charSpacing:2});
+  (ex.exit_candidates||[]).slice(0,5).forEach((c,i)=>{const x=.28+i*1.9;sl.addShape(pptx.shapes.RECTANGLE,{x,y:3.78,w:1.74,h:.82,fill:{color:'EFF6FF'}});sl.addText(c.name||'',{x,y:3.81,w:1.74,h:.32,fontSize:10,color:'1E40AF',bold:true,align:'center',valign:'middle'});sl.addText(c.type||'',{x,y:4.12,w:1.74,h:.24,fontSize:8,color:G,align:'center'});});
+  // SL4 Bull/Bear
+  sl=pptx.addSlide();sl.background={color:LG};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.5,fill:{color:N}});
+  sl.addText('BULL CASE & BEAR CASE',{x:.4,y:0,w:9,h:.5,fontSize:12,color:W,bold:true,valign:'middle'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y:.66,w:4.62,h:4.68,fill:{color:'ECFDF5'}});sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y:.66,w:4.62,h:.36,fill:{color:'059669'}});sl.addText('BULL CASE',{x:.35,y:.66,w:4.42,h:.36,fontSize:11,color:W,bold:true,valign:'middle',charSpacing:1});
+  (results.bull_case||[]).slice(0,5).forEach((item,i)=>{sl.addShape(pptx.shapes.RECTANGLE,{x:.4,y:1.15+i*.64,w:.05,h:.38,fill:{color:'059669'}});sl.addText(item,{x:.56,y:1.13+i*.64,w:4.1,h:.42,fontSize:10,color:'065F46',wrap:true,valign:'top'});});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:5.13,y:.66,w:4.62,h:4.68,fill:{color:'FFFBEB'}});sl.addShape(pptx.shapes.RECTANGLE,{x:5.13,y:.66,w:4.62,h:.36,fill:{color:'B45309'}});sl.addText('BEAR CASE',{x:5.23,y:.66,w:4.42,h:.36,fontSize:11,color:W,bold:true,valign:'middle',charSpacing:1});
+  (results.bear_case||[]).slice(0,5).forEach((item,i)=>{sl.addShape(pptx.shapes.RECTANGLE,{x:5.28,y:1.15+i*.64,w:.05,h:.38,fill:{color:'B45309'}});sl.addText(item,{x:5.44,y:1.13+i*.64,w:4.1,h:.42,fontSize:10,color:'78350F',wrap:true,valign:'top'});});
+  // SL5 Sorular
+  sl=pptx.addSlide();sl.background={color:LG};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.5,fill:{color:N}});
+  sl.addText(lang==='tr'?'KRİTİK TOPLANTI SORULARI':'CRITICAL MEETING QUESTIONS',{x:.4,y:0,w:9,h:.5,fontSize:12,color:W,bold:true,valign:'middle'});
+  (results.questions||[]).filter(q=>q.star).slice(0,4).forEach((q,i)=>{const y=.66+i*1.2;sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y,w:9.5,h:1.1,fill:{color:W}});sl.addShape(pptx.shapes.RECTANGLE,{x:.25,y,w:.06,h:1.1,fill:{color:B}});sl.addText((q.category||'').toUpperCase(),{x:.44,y:y+.04,w:2,h:.2,fontSize:8,color:'1D4ED8',bold:true,charSpacing:1});sl.addText(q.question||'',{x:.44,y:y+.24,w:9,h:.3,fontSize:11,color:N,bold:true,wrap:true});sl.addText(`✓ ${q.good_answer||''}`,{x:.44,y:y+.58,w:4.5,h:.42,fontSize:9,color:'059669',wrap:true});sl.addText(`⚠ ${q.red_flag||''}`,{x:5.1,y:y+.58,w:4.55,h:.42,fontSize:9,color:'DC2626',wrap:true});});
+  // SL6 Cheat Sheet
+  sl=pptx.addSlide();sl.background={color:N};
+  sl.addShape(pptx.shapes.RECTANGLE,{x:0,y:0,w:10,h:.5,fill:{color:B}});
+  sl.addText('MEETING CHEAT SHEET',{x:.4,y:0,w:9,h:.5,fontSize:13,color:W,bold:true,valign:'middle',charSpacing:2});
+  sl.addText(form.companyName||'',{x:.46,y:.66,w:6,h:.68,fontSize:26,color:W,bold:true});
+  sl.addText(`${ws.toFixed(1)}/10  ·  ${form.stage}`,{x:.46,y:1.35,w:5,h:.3,fontSize:11,color:G});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:6.8,y:.64,w:2.88,h:.84,fill:{color:rCol}});sl.addText(lang==='tr'?rec.tr:rec.en,{x:6.8,y:.64,w:2.88,h:.84,fontSize:14,color:W,bold:true,align:'center',valign:'middle'});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.28,y:1.84,w:9.44,h:.98,fill:{color:'1E3A5F'}});sl.addShape(pptx.shapes.RECTANGLE,{x:.28,y:1.84,w:9.44,h:.24,fill:{color:B}});sl.addText(lang==='tr'?'TEK SORU':'THE ONE QUESTION',{x:.42,y:1.84,w:9,h:.24,fontSize:8,color:W,bold:true,valign:'middle',charSpacing:3});sl.addText(`"${results.key_question||''}"`,{x:.42,y:2.1,w:9.1,h:.66,fontSize:11,color:'E2E8F0',italic:true,wrap:true});
+  sl.addShape(pptx.shapes.RECTANGLE,{x:.28,y:2.96,w:4.6,h:2.36,fill:{color:'1E3A5F'}});sl.addText(lang==='tr'?'BREAKOUT KOŞULLARI':'BREAKOUT CONDITIONS',{x:.42,y:3.0,w:4.2,h:.24,fontSize:9,color:'93C5FD',bold:true,charSpacing:1});(results.breakout_conditions||[]).slice(0,4).forEach((c,i)=>sl.addText(`${i+1}. ${c}`,{x:.42,y:3.3+i*.44,w:4.2,h:.42,fontSize:10,color:'E2E8F0',wrap:true}));
+  sl.addShape(pptx.shapes.RECTANGLE,{x:5.12,y:2.96,w:4.6,h:2.36,fill:{color:'1E3A5F'}});sl.addText(lang==='tr'?'TAKİP METRİKLERİ':'METRICS TO WATCH',{x:5.26,y:3.0,w:4.2,h:.24,fontSize:9,color:'93C5FD',bold:true,charSpacing:1});(results.metrics_to_watch||[]).slice(0,4).forEach((m,i)=>sl.addText(`${i+1}. ${m.metric||m}${m.threshold?': '+m.threshold:''}`,{x:5.26,y:3.3+i*.44,w:4.2,h:.42,fontSize:10,color:'E2E8F0',wrap:true}));
+  await pptx.writeFile({fileName:`${form.companyName||'Startup'}_AngelLens.pptx`});
+}
+
+function Gauge({score,size=130}){
+  const[d,setD]=useState(0);useEffect(()=>{const t0=Date.now(),a=()=>{const t=Math.min((Date.now()-t0)/1400,1),ev=1-Math.pow(1-t,3);setD(score*ev);if(t<1)requestAnimationFrame(a);};requestAnimationFrame(a);},[score]);
+  const r=50,cx=64,cy=64,C=2*Math.PI*r,dash=(d/10)*C,col=scColor(score);
+  return h('svg',{width:size,height:size,viewBox:'0 0 128 128'},h('circle',{cx,cy,r,fill:'none',stroke:'var(--gray-100)',strokeWidth:9}),h('circle',{cx,cy,r,fill:'none',stroke:col,strokeWidth:9,strokeDasharray:`${dash} ${C}`,strokeLinecap:'round',transform:`rotate(-90 ${cx} ${cy})`}),h('text',{x:cx,y:cy-3,textAnchor:'middle',fill:col,style:{fontSize:24,fontWeight:700,fontFamily:'Inter'}},d.toFixed(1)),h('text',{x:cx,y:cy+14,textAnchor:'middle',fill:'var(--gray-400)',style:{fontSize:10}},'/10'));
+}
+
+function SBar({label,score,weight}){
+  const[w,setW]=useState(0);useEffect(()=>{const t=setTimeout(()=>setW(score*10),160);return()=>clearTimeout(t);},[score]);
+  return h('div',{className:'score-row'},h('span',{style:{flex:1,fontSize:13,color:'var(--gray-700)'}},label),weight>0&&h('span',{style:{fontSize:10,color:'var(--gray-400)',fontWeight:600,width:28,textAlign:'right'}},`×${weight}%`),h('div',{style:{width:120,height:4,background:'var(--gray-100)',borderRadius:2,overflow:'hidden',margin:'0 8px'}},h('div',{className:'bf',style:{width:`${w}%`,background:scColor(score)}})),h('span',{style:{fontSize:13,fontWeight:700,color:scColor(score),width:28,textAlign:'right'}},score.toFixed(1)));
+}
+
+function Results({results,form,lang,onPptx,pptxBusy}){
+  const R=rcfg(results.recommendation),ws=results.weighted_score||0,us=results.unweighted_score||0;
+  const L=(a,b)=>lang==='tr'?a:b;
+  const ex=results.exit_analysis||{},ma=results.market_analysis||{},ca=results.company_analysis||{},team=results.team_assessment||{},comp=results.competitive_analysis||{};
+  const sevBg=s=>s==='high'?'var(--red-light)':s==='low'?'var(--green-light)':'var(--amber-light)';
+  const sevC=s=>s==='high'?'var(--red)':s==='low'?'var(--green)':'var(--amber)';
+  const scnC={bear:{bg:'var(--red-light)',bc:'#FECACA',c:'var(--red)',lbl:L('Kötü Durum','Bear Case')},base:{bg:'var(--amber-light)',bc:'#FDE68A',c:'var(--amber)',lbl:L('Baz Senaryo','Base Case')},bull:{bg:'var(--green-light)',bc:'#A7F3D0',c:'var(--green)',lbl:L('İyi Durum','Bull Case')}};
+  return h('div',{style:{maxWidth:1020,margin:'0 auto',padding:'32px 24px'},className:'fi'},
+    // HERO
+    h('div',{style:{background:'var(--navy)',borderRadius:10,padding:'28px 32px',marginBottom:16,color:'white'}},
+      h('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:24}},
+        h('div',{style:{flex:1,minWidth:300}},
+          h('div',{style:{fontSize:10,color:'rgba(255,255,255,.4)',letterSpacing:'1px',textTransform:'uppercase',marginBottom:8}},'ANGEL LENS · '+new Date().toLocaleDateString(lang==='tr'?'tr-TR':'en-GB',{month:'long',year:'numeric'}).toUpperCase()),
+          h('div',{style:{fontSize:10,color:'rgba(255,255,255,.35)',letterSpacing:'.5px',textTransform:'uppercase',marginBottom:10}},(form.companyName||'').toUpperCase()+' · '+(form.stage||'').toUpperCase()),
+          h('div',{style:{fontSize:24,fontWeight:700,fontFamily:'Playfair Display',marginBottom:14,lineHeight:1.2}},L('Yatırım Değerlendirmesi','Investment Assessment')),
+          h('div',{style:{fontSize:13,color:'rgba(255,255,255,.7)',lineHeight:1.8,maxWidth:560,marginBottom:20}},results.executive_summary),
+          h('div',{style:{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}},
+            h('span',{style:{display:'inline-flex',alignItems:'center',gap:7,background:R.bg,border:`1px solid ${R.bc}`,borderRadius:20,padding:'7px 16px',fontSize:12,fontWeight:700,color:R.c,letterSpacing:'.5px'}},h('span',{style:{width:7,height:7,borderRadius:'50%',background:R.c,display:'inline-block'}}),L(R.tr,R.en)),
+            h('span',{style:{fontSize:12,color:'rgba(255,255,255,.35)'}},L('Güven','Confidence')+': '+(results.confidence||'medium'))
+          )
+        ),
+        h('div',{style:{display:'flex',gap:24,alignItems:'center'}},
+          h('div',{style:{textAlign:'center'}},h(Gauge,{score:ws,size:130}),h('div',{style:{fontSize:10,color:'rgba(255,255,255,.4)',letterSpacing:'.6px',textTransform:'uppercase',marginTop:4}},L('Ağırlıklı Skor','Weighted Score'))),
+          h('div',{style:{textAlign:'center',minWidth:80}},h('div',{style:{fontSize:38,fontWeight:700,color:scColor(us),lineHeight:1}},us.toFixed(1)),h('div',{style:{fontSize:9,color:'rgba(255,255,255,.4)',letterSpacing:'.6px',textTransform:'uppercase',marginTop:5}},L('Ağırlıksız','Unweighted')))
+        )
+      ),
+      results.investment_recommendation&&h('div',{style:{marginTop:20,paddingTop:20,borderTop:'1px solid rgba(255,255,255,.1)',fontSize:13,color:'rgba(255,255,255,.7)',lineHeight:1.7,fontStyle:'italic'}},`"${results.investment_recommendation}"`)
+    ),
+    // Şirket analizi
+    ca.what_they_do&&h('div',{className:'card'},
+      h('div',{className:'sec'},L('Şirket & Ürün Analizi','Company & Product Analysis')),
+      h('div',{className:'g2',style:{gap:16}},
+        h('div',null,
+          h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8}},L('Ne Yapıyor?','What It Does')),
+          h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7,marginBottom:14}},ca.what_they_do),
+          ca.problem_solution&&h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}},L('Problem & Çözüm','Problem & Solution')),h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7}},ca.problem_solution))
+        ),
+        h('div',null,
+          ca.business_model&&h('div',{style:{marginBottom:14}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:6}},L('İş Modeli','Business Model')),h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7}},ca.business_model)),
+          ca.painkiller_vitamin&&h('div',{style:{background:'var(--blue-light)',borderRadius:6,padding:'12px 14px',border:'1px solid var(--blue-mid)'}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:5}},L('Painkiller mı Vitamin mi?','Painkiller or Vitamin?')),h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.6}},ca.painkiller_vitamin))
+        )
+      )
+    ),
+    // Pazar analizi
+    (ma.tam||ma.growth_drivers?.length)&&h('div',{className:'card'},
+      h('div',{className:'sec'},L('Pazar Analizi','Market Analysis')),
+      h('div',{className:'g3',style:{marginBottom:16}},
+        [['TAM',ma.tam],['SAM',ma.sam],['SOM',ma.som]].filter(([,v])=>v).map(([lbl,val])=>h('div',{key:lbl,className:'kpi'},h('div',{className:'kpi-lbl'},lbl),h('div',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)',lineHeight:1.5}},val)))
+      ),
+      h('div',{className:'g2'},
+        ma.growth_drivers?.length&&h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}},L('Büyüme Katalizörleri','Growth Drivers')),ma.growth_drivers.map((d,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:7,fontSize:13,color:'var(--gray-700)',lineHeight:1.5}},h('span',{style:{color:'var(--green)',fontWeight:700,flexShrink:0}},`${i+1}.`),h('span',null,d)))),
+        ma.headwinds?.length&&h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}},L('Zorluklar','Headwinds')),ma.headwinds.map((d,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:7,fontSize:13,color:'var(--gray-700)',lineHeight:1.5}},h('span',{style:{color:'var(--red)',fontWeight:700,flexShrink:0}},'▲'),h('span',null,d))))
+      )
+    ),
+    // Kriter skorları
+    h('div',{className:'g2',style:{gap:16}},
+      h('div',{className:'card',style:{marginBottom:16}},h('div',{className:'sec'},L('VC 8 Kriteri','VC 8 Criteria')),VC.map(c=>h(SBar,{key:c.id,label:lang==='tr'?c.tr:c.en,score:results.scores?.[c.id]?.score||0,weight:c.w}))),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:16}},
+        h('div',{className:'card',style:{marginBottom:0}},h('div',{className:'sec'},L('Angel Kriterleri','Angel Criteria')),AG.map(c=>h('div',{key:c.id},h(SBar,{label:lang==='tr'?c.tr:c.en,score:results.scores?.[c.id]?.score||0,weight:0}),results.scores?.[c.id]?.note&&h('div',{style:{fontSize:12,color:'var(--gray-500)',lineHeight:1.6,margin:'4px 0 10px',paddingLeft:4}},results.scores[c.id].note)))),
+        results.scenarios&&h('div',{className:'card',style:{marginBottom:0}},h('div',{className:'sec'},L('Senaryo Analizi','Scenarios')),Object.entries(results.scenarios).map(([k,s])=>h('div',{key:k,style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'10px 0',borderBottom:'1px solid var(--gray-100)'}},h('div',null,h('div',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)',marginBottom:3}},s.label),h('div',{style:{fontSize:12,color:'var(--gray-500)',lineHeight:1.5,maxWidth:190}},s.description),s.conditions?.length&&h('div',{style:{marginTop:5}},s.conditions.slice(0,2).map((c,i)=>h('div',{key:i,style:{fontSize:11,color:'var(--gray-400)',marginBottom:2}},`· ${c}`)))),h('span',{style:{fontSize:22,fontWeight:700,color:scColor(s.score||0)}},(s.score||0).toFixed(1)))))
+      )
+    ),
+    // Kriter detayları
+    h('div',{className:'card'},h('div',{className:'sec'},L('Kriter Detayları & Gerekçeler','Criteria Details & Rationale')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}},
+        [...VC,...AG].map(c=>{const s=results.scores?.[c.id];if(!s)return null;
+          return h('div',{key:c.id,style:{background:'var(--gray-50)',borderRadius:7,padding:14,borderLeft:`3px solid ${scColor(s.score||0)}`}},
+            h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:7}},h('span',{style:{fontSize:13,fontWeight:600,color:'var(--gray-700)'}},lang==='tr'?c.tr:c.en),h('span',{style:{fontSize:15,fontWeight:700,color:scColor(s.score||0)}},(s.score||0).toFixed(1))),
+            h('div',{style:{fontSize:12,color:'var(--gray-600)',lineHeight:1.7,marginBottom:8}},s.note),
+            h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}},
+              h('div',null,s.pros?.slice(0,3).map((p,i)=>h('div',{key:i,style:{fontSize:11,color:'var(--green)',marginBottom:3,lineHeight:1.4}},`✓ ${p}`))),
+              h('div',null,s.cons?.slice(0,3).map((cc,i)=>h('div',{key:i,style:{fontSize:11,color:'var(--red)',marginBottom:3,lineHeight:1.4}},`✗ ${cc}`)))
+            )
+          );
+        })
+      )
+    ),
+    // Ekip
+    (team.overall||team.strengths?.length)&&h('div',{className:'card'},h('div',{className:'sec'},L('Ekip & Kurucu Değerlendirmesi','Team & Founder Assessment')),
+      h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7,marginBottom:14}},team.overall),
+      h('div',{className:'g2',style:{gap:16}},
+        h('div',null,
+          team.strengths?.length&&h('div',{style:{marginBottom:12}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8}},L('Güçlü Yönler','Strengths')),team.strengths.map((s,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:7,fontSize:13,color:'var(--gray-700)',lineHeight:1.5}},h('span',{style:{color:'var(--green)',fontWeight:700,flexShrink:0}},'✓'),h('span',null,s)))),
+          team.founder_market_fit_detail&&h('div',{style:{background:'var(--purple-light)',borderRadius:6,padding:'12px 14px',border:'1px solid #DDD6FE'}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--purple)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:5}},L('Founder-Market Fit','Founder-Market Fit')),h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7}},team.founder_market_fit_detail))
+        ),
+        team.gaps?.length&&h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8}},L('Kritik Açıklar','Critical Gaps')),team.gaps.map((g,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:7,fontSize:13,color:'var(--gray-700)',lineHeight:1.5,background:'var(--red-light)',borderRadius:5,padding:'8px 10px'}},h('span',{style:{color:'var(--red)',fontWeight:700,flexShrink:0}},'⚠'),h('span',null,g))))
+      )
+    ),
+    // Rekabet
+    comp.summary&&h('div',{className:'card'},h('div',{className:'sec'},L('Rekabet & Moat Analizi','Competitive & Moat Analysis')),
+      h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7,marginBottom:14}},comp.summary),
+      comp.moat_assessment&&h('div',{style:{background:'var(--blue-light)',borderRadius:6,padding:'12px 14px',border:'1px solid var(--blue-mid)',marginBottom:14}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:5}},L('Moat Değerlendirmesi','Moat Assessment')),h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.7}},comp.moat_assessment)),
+      h('div',{className:'g2'},
+        comp.differentiators?.length&&h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8}},L('Farklılaştırıcılar','Differentiators')),comp.differentiators.map((d,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:7,fontSize:13,color:'var(--gray-700)',lineHeight:1.5}},h('span',{style:{color:'var(--blue)',fontWeight:700,flexShrink:0}},`${i+1}.`),h('span',null,d)))),
+        comp.vulnerabilities?.length&&h('div',null,h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:8}},L('Kırılganlıklar','Vulnerabilities')),comp.vulnerabilities.map((v,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:7,fontSize:13,color:'var(--gray-700)',lineHeight:1.5}},h('span',{style:{color:'var(--red)',fontWeight:700,flexShrink:0}},'△'),h('span',null,v))))
+      )
+    ),
+    // Exit analizi
+    h('div',{className:'card'},h('div',{className:'sec'},L('Çıkış Analizi & Getiri Hesabı','Exit Analysis & Return Calculation')),
+      h('div',{className:'g4',style:{marginBottom:20}},[{l:L('Giriş Değeri','Entry Valuation'),v:ex.entry_valuation||form.preMoneyVal||'—'},{l:L('Hedef Exit','Target Exit'),v:ex.expected_exit_value||'—'},{l:L('Exit Süresi','Time to Exit'),v:ex.time_to_exit||'—'},{l:L('Baz Getiri','Base Return'),v:ex.return_scenarios?.base?.multiple||'—'}].map(({l,v})=>h('div',{key:l,className:'kpi'},h('div',{className:'kpi-lbl'},l),h('div',{className:'kpi-val',style:{fontSize:18}},v)))),
+      h('div',{className:'g3',style:{marginBottom:20}},['bear','base','bull'].map(key=>{const s=ex.return_scenarios?.[key],cfg=scnC[key];if(!s)return null;return h('div',{key,style:{background:cfg.bg,border:`1px solid ${cfg.bc}`,borderRadius:8,padding:18}},h('div',{style:{fontSize:11,fontWeight:700,color:cfg.c,textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}},cfg.lbl),h('div',{style:{fontSize:34,fontWeight:700,color:cfg.c,lineHeight:1,marginBottom:5}},s.multiple||'?x'),h('div',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)',marginBottom:3}},s.exit_value||''),h('div',{style:{fontSize:12,color:'var(--gray-500)',marginBottom:3}},s.irr||''),h('div',{style:{fontSize:11,color:'var(--gray-400)',marginBottom:10}},s.exit_year||''),s.rationale&&h('div',{style:{fontSize:12,color:'var(--gray-700)',lineHeight:1.6,borderTop:`1px solid ${cfg.bc}`,paddingTop:10}},s.rationale));})),
+      ex.exit_routes?.length&&h('div',{style:{marginBottom:16}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}},L('Çıkış Yolları','Exit Routes')),h('div',{style:{display:'flex',flexDirection:'column',gap:8}},ex.exit_routes.map((r,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,background:'var(--gray-50)',borderRadius:6,padding:'9px 14px',border:'1px solid var(--gray-200)'}},h('div',{style:{width:22,height:22,borderRadius:'50%',background:'var(--blue)',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:11,fontWeight:700,flexShrink:0}},r.priority||i+1),h('div',{style:{flex:1}},h('div',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)',marginBottom:2}},r.route||''),r.notes&&h('div',{style:{fontSize:12,color:'var(--gray-500)'}},r.notes)),r.probability&&h('span',{style:{fontSize:11,fontWeight:600,padding:'3px 10px',borderRadius:20,background:r.probability?.includes('Yüksek')||r.probability?.includes('High')?'var(--green-light)':'var(--amber-light)',color:r.probability?.includes('Yüksek')||r.probability?.includes('High')?'var(--green)':'var(--amber)'}},r.probability))))),
+      ex.exit_candidates?.length&&h('div',{style:{marginBottom:16}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}},L('Potansiyel Alıcılar','Potential Acquirers')),h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}},ex.exit_candidates.map((c,i)=>h('div',{key:i,style:{background:'white',border:'1px solid var(--gray-200)',borderRadius:7,padding:12}},h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6}},h('div',{style:{fontWeight:600,fontSize:13,color:'var(--gray-900)'}},c.name||''),h('div',{style:{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:3}},h('span',{style:{fontSize:9,fontWeight:600,background:'var(--blue-light)',color:'var(--blue)',padding:'2px 7px',borderRadius:10}},c.type||''),c.likelihood&&h('span',{style:{fontSize:9,fontWeight:600,color:c.likelihood?.includes('Yüksek')||c.likelihood?.includes('High')?'var(--green)':'var(--amber)'}},c.likelihood))),h('div',{style:{fontSize:11,color:'var(--gray-500)',lineHeight:1.5}},c.motivation||''))))),
+      ex.comparable_exits?.filter(c=>c.company).length>0&&h('div',{style:{marginBottom:14}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--gray-400)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:10}},L('Benzer Exit İşlemleri','Comparable Transactions')),h('div',{style:{border:'1px solid var(--gray-200)',borderRadius:7,overflow:'hidden'}},h('table',{style:{width:'100%',borderCollapse:'collapse',fontSize:12}},h('thead',null,h('tr',{style:{background:'var(--gray-50)'}},['Şirket','Değer','Yıl','Alıcı','EV/Çarpan'].map(hd=>h('th',{key:hd,style:{padding:'8px 12px',textAlign:'left',fontWeight:600,color:'var(--gray-500)',fontSize:11}},hd)))),h('tbody',null,ex.comparable_exits.filter(c=>c.company).map((c,i)=>h('tr',{key:i,style:{borderTop:'1px solid var(--gray-100)'}},h('td',{style:{padding:'8px 12px',fontWeight:600,color:'var(--gray-900)'}},c.company),h('td',{style:{padding:'8px 12px',fontWeight:600,color:'var(--green)'}},c.value),h('td',{style:{padding:'8px 12px',color:'var(--gray-500)'}},c.year),h('td',{style:{padding:'8px 12px',color:'var(--gray-500)'}},c.acquirer),h('td',{style:{padding:'8px 12px',color:'var(--blue)',fontWeight:600}},c.ev_multiple))))))),
+      ex.key_risks&&h('div',{style:{background:'var(--amber-light)',border:'1px solid #FDE68A',borderRadius:6,padding:'10px 14px'}},h('div',{style:{fontSize:11,fontWeight:600,color:'var(--amber)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:4}},L('Exit Riski','Exit Risk')),h('div',{style:{fontSize:13,color:'var(--gray-700)',lineHeight:1.6}},ex.key_risks))
+    ),
+    // Bull/Bear
+    h('div',{className:'g2',style:{gap:16,marginBottom:16}},
+      h('div',{style:{background:'var(--green-light)',border:'1px solid #A7F3D0',borderRadius:8,padding:20}},h('div',{style:{fontSize:12,fontWeight:700,color:'var(--green)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:14}},'Bull Case'),(results.bull_case||[]).map((it,i)=>h('div',{key:i,style:{display:'flex',gap:9,marginBottom:10,fontSize:13,color:'#064E3B',lineHeight:1.6}},h('span',{style:{color:'var(--green)',fontWeight:700,flexShrink:0}},`${i+1}.`),h('span',null,it)))),
+      h('div',{style:{background:'var(--amber-light)',border:'1px solid #FDE68A',borderRadius:8,padding:20}},h('div',{style:{fontSize:12,fontWeight:700,color:'var(--amber)',textTransform:'uppercase',letterSpacing:'.5px',marginBottom:14}},'Bear Case'),(results.bear_case||[]).map((it,i)=>h('div',{key:i,style:{display:'flex',gap:9,marginBottom:10,fontSize:13,color:'#78350F',lineHeight:1.6}},h('span',{style:{color:'var(--amber)',fontWeight:700,flexShrink:0}},`${i+1}.`),h('span',null,it))))
+    ),
+    // Riskler
+    results.risks?.length&&h('div',{className:'card'},h('div',{className:'sec'},L('Başlıca Riskler & Mitigantlar','Key Risks & Mitigants')),
+      h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
+        results.risks.map((r,i)=>h('div',{key:i,style:{background:sevBg(r.severity),borderRadius:7,padding:14,border:'1px solid rgba(0,0,0,.04)'}},
+          h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},h('span',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)'}},r.category),h('span',{style:{fontSize:10,fontWeight:700,color:sevC(r.severity),textTransform:'uppercase',letterSpacing:'.5px',background:'white',borderRadius:10,padding:'2px 8px'}},(r.severity||'').toUpperCase())),
+          h('div',{style:{fontSize:12,color:'var(--gray-700)',lineHeight:1.6,marginBottom:r.early_warning||r.test?8:0}},r.description),
+          r.early_warning&&h('div',{style:{fontSize:11,color:'var(--gray-500)',marginBottom:5}},`📡 ${r.early_warning}`),
+          r.test&&h('div',{style:{fontSize:11,color:'var(--gray-500)',borderTop:'1px solid rgba(0,0,0,.05)',paddingTop:6,marginTop:4}},`🔎 ${r.test}`),
+          r.mitigant&&h('div',{style:{fontSize:11,color:'var(--gray-600)',marginTop:5,fontStyle:'italic'}},`💡 ${r.mitigant}`)
+        ))
+      )
+    ),
+    // Sorular
+    results.questions?.length&&h('div',{className:'card'},h('div',{className:'sec'},L('Toplantıda Sorulacak Sorular','Meeting Questions')),
+      results.questions.map((q,i)=>h('div',{key:i,className:'q-card'},
+        h('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:5}},h('span',{style:{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'.6px'}},(q.category||'').toUpperCase()),q.star&&h('span',{style:{fontSize:10,background:'var(--blue)',color:'white',borderRadius:10,padding:'1px 7px',fontWeight:700}},L('★ KRİTİK','★ KEY'))),
+        h('div',{style:{fontSize:14,fontWeight:600,color:'var(--gray-900)',marginBottom:10,lineHeight:1.5}},q.question),
+        h('div',{className:'g2',style:{gap:8}},
+          h('div',{style:{background:'var(--green-light)',borderRadius:5,padding:'8px 12px'}},h('div',{style:{fontSize:10,fontWeight:700,color:'var(--green)',marginBottom:4,textTransform:'uppercase',letterSpacing:'.4px'}},L('İyi Cevap','Good Answer')),h('div',{style:{fontSize:12,color:'#064E3B',lineHeight:1.6}},q.good_answer)),
+          h('div',{style:{background:'var(--red-light)',borderRadius:5,padding:'8px 12px'}},h('div',{style:{fontSize:10,fontWeight:700,color:'var(--red)',marginBottom:4,textTransform:'uppercase',letterSpacing:'.4px'}},'Red Flag'),h('div',{style:{fontSize:12,color:'#7F1D1D',lineHeight:1.6}},q.red_flag))
+        )
+      ))
+    ),
+    // Tek soru
+    results.key_question&&h('div',{style:{background:'var(--navy)',borderRadius:8,padding:'22px 28px',marginBottom:16}},
+      h('div',{style:{fontSize:10,fontWeight:700,color:'rgba(147,197,253,.8)',letterSpacing:'1px',textTransform:'uppercase',marginBottom:10}},L('TEK SORU HAKKIMIZ OLSAYDI','IF WE HAD ONE QUESTION')),
+      h('div',{style:{fontSize:16,fontWeight:500,color:'white',lineHeight:1.8,fontStyle:'italic'}},`"${results.key_question}"`)
+    ),
+    // Takip ve breakout
+    h('div',{className:'g2',style:{gap:16,marginBottom:16}},
+      results.breakout_conditions?.length&&h('div',{className:'card',style:{marginBottom:0}},h('div',{className:'sec'},L('Breakout Koşulları','Breakout Conditions')),results.breakout_conditions.map((c,i)=>h('div',{key:i,style:{display:'flex',gap:8,marginBottom:10,fontSize:13,color:'var(--gray-700)',lineHeight:1.5}},h('span',{style:{color:'var(--blue)',fontWeight:700,flexShrink:0,width:18}},`${i+1}.`),h('span',null,c)))),
+      results.metrics_to_watch?.length&&h('div',{className:'card',style:{marginBottom:0}},h('div',{className:'sec'},L('Takip Edilecek Metrikler','Metrics to Watch')),results.metrics_to_watch.map((m,i)=>h('div',{key:i,style:{borderBottom:'1px solid var(--gray-100)',padding:'8px 0'}},h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:(m.why)?3:0}},h('span',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)'}},(m.metric||m).toString()),m.threshold&&h('span',{style:{fontSize:12,color:'var(--blue)',fontWeight:600}},m.threshold)),m.why&&h('div',{style:{fontSize:11,color:'var(--gray-400)'}},m.why))))
+    ),
+    // Sonraki adımlar
+    results.next_steps?.length&&h('div',{className:'card',style:{marginBottom:16}},h('div',{className:'sec'},L('Önerilen Sonraki Adımlar','Recommended Next Steps')),h('div',{style:{display:'flex',flexDirection:'column',gap:8}},results.next_steps.map((s,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:12,background:'var(--gray-50)',borderRadius:6,padding:'10px 14px',border:'1px solid var(--gray-200)'}},h('div',{style:{width:24,height:24,borderRadius:'50%',background:'var(--blue)',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontSize:12,fontWeight:700,flexShrink:0}},i+1),h('span',{style:{fontSize:13,color:'var(--gray-700)'}},s))))),
+    // Export
+    h('div',{className:'card',['data-np']:true},
+      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:14}},
+        h('div',null,h('div',{style:{fontSize:13,fontWeight:600,color:'var(--gray-900)',marginBottom:3}},L('Raporu İndir','Export Report')),h('div',{style:{fontSize:12,color:'var(--gray-400)'}},L('PDF: Ctrl+P · PPTX: 6 slaytlık kurumsal sunum','PDF: Ctrl+P · PPTX: 6-slide corporate deck'))),
+        h('div',{style:{display:'flex',gap:10}},
+          h('button',{onClick:()=>window.print(),style:{padding:'10px 22px',background:'var(--red-light)',color:'var(--red)',border:'1px solid #FECACA',borderRadius:6,fontWeight:600,fontSize:13,cursor:'pointer'}},'PDF'),
+          h('button',{onClick:onPptx,disabled:pptxBusy,style:{padding:'10px 22px',background:pptxBusy?'var(--gray-100)':'var(--blue)',color:pptxBusy?'var(--gray-400)':'white',border:'none',borderRadius:6,fontWeight:600,fontSize:13,cursor:pptxBusy?'not-allowed':'pointer',transition:'background .15s'}},pptxBusy?L('Hazırlanıyor…','Generating…'):'PPTX ↓')
+        )
+      )
+    )
+  );
+}
+
+function App(){
+  const[lang,setLang]=useState('tr');const[step,setStep]=useState('form');const[depth,setDepth]=useState('deep');const[loadIdx,setLoadIdx]=useState(0);const[pdfName,setPdfName]=useState(null);const[pdfB64,setPdfB64]=useState(null);const[isParsing,setIsParsing]=useState(false);const[pptxBusy,setPptxBusy]=useState(false);const[toast,setToast]=useState(null);const[results,setResults]=useState(null);const[error,setError]=useState(null);
+  const[form,setForm]=useState({companyName:'',website:'',sector:'',country:'Türkiye',foundedYear:'',stage:'Seed',round:'',description:'',problem:'',arr:'',mrr:'',burnRate:'',runway:'',arpu:'',cac:'',ltv:'',preMoneyVal:'',postMoneyVal:'',askAmount:'',founders:[{name:'',role:'CEO',linkedin:''},{name:'',role:'CTO',linkedin:''}],competitors:'',capTable:''});
+  const fileRef=useRef(null);const loadTimer=useRef(null);
+  useEffect(()=>{if(step==='analyzing'){let i=0;loadTimer.current=setInterval(()=>{i=(i+1)%7;setLoadIdx(i);},2600);}return()=>clearInterval(loadTimer.current);},[step]);
+  const L=(a,b)=>lang==='tr'?a:b;
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),2800);};
+  const upd=k=>v=>setForm(p=>({...p,[k]:v}));
+  const updF=(i,k)=>v=>setForm(p=>({...p,founders:p.founders.map((f,idx)=>idx===i?{...f,[k]:v}:f)}));
+  const updNum=k=>e=>{const v=e.target.value.replace(/,/g,'');if(!v||!isNaN(v))setForm(p=>({...p,[k]:v?Number(v).toLocaleString('en-US'):''}));};
+  const handleFile=ev=>{const f=ev.target.files[0];if(!f)return;setPdfName(f.name);const r=new FileReader();r.onload=()=>setPdfB64(r.result.split(',')[1]);r.readAsDataURL(f);};
+  const handleParse=async()=>{
+    if(!pdfB64)return;
+    setIsParsing(true);setError(null);
+    try{
+      const p=await parsePDF(pdfB64);
+      if(p){
+        setForm(prev=>({...prev,...Object.fromEntries(Object.entries(p).filter(([k,v])=>k!=='founders'&&v)),founders:p.founders?.filter(f=>f.name).length?p.founders:prev.founders}));
+        showToast(L('PDF okundu','PDF parsed'));
+      }
+    }catch(err){
+      setError(err.message);
+    }
+    setIsParsing(false);
+  };
+  const handleAnalyze=async()=>{if(!form.companyName.trim())return;setError(null);setStep('analyzing');setLoadIdx(0);try{const prompt=buildPrompt(form,lang);const raw=await callAPI([{role:'user',content:[{type:'text',text:prompt}]}]);const json=JSON.parse(raw.replace(/```json|```/g,'').trim());setResults(json);setStep('results');}catch(err){setError((L('Analiz hatası: ','Error: '))+err.message);setStep('form');}};
+  const handlePptx=async()=>{if(!results)return;setPptxBusy(true);try{await generatePPTX(results,form,lang);showToast(L('✓ PPTX indirildi!','✓ PPTX downloaded!'));}catch(err){setError((L('PPTX hatası: ','PPTX error: '))+err.message);}setPptxBusy(false);};
+
+  const header=h('header',{className:'header'},
+    h('div',{style:{display:'flex',alignItems:'center',gap:10}},
+      h('svg',{width:30,height:30,viewBox:'0 0 30 30',fill:'none'},h('rect',{width:30,height:30,rx:6,fill:'white',fillOpacity:.1}),h('path',{d:'M9 22L15 8L21 22',stroke:'white',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}),h('path',{d:'M11 17H19',stroke:'#60A5FA',strokeWidth:2,strokeLinecap:'round'})),
+      h('div',null,h('div',{className:'logo-text'},'Angel Lens'),h('div',{className:'logo-sub'},'Investment Intelligence Platform'))
+    ),
+    h('div',{style:{display:'flex',gap:4,alignItems:'center'}},
+      step==='results'&&h('button',{className:'nav-btn',onClick:()=>{setStep('form');setResults(null);setError(null);}},L('← Yeni Analiz','← New Analysis')),
+      h('div',{style:{width:1,height:16,background:'rgba(255,255,255,.15)',margin:'0 8px'}}),
+      h('button',{className:'lang-btn',onClick:()=>setLang(l=>l==='tr'?'en':'tr')},lang==='tr'?'EN':'TR')
+    )
+  );
+  const toastEl=toast&&h('div',{className:'toast'},toast);
+
+  if(step==='form')return h('div',null,header,toastEl,
+    h('div',{style:{maxWidth:860,margin:'0 auto',padding:'32px 24px'}},
+      h('div',{style:{marginBottom:24}},h('div',{style:{fontSize:22,fontWeight:700,fontFamily:'Playfair Display',marginBottom:5,color:'var(--navy)'}},L('Startup Değerlendirmesi','Startup Evaluation')),h('div',{style:{fontSize:13,color:'var(--gray-500)'}},L('Pitch deck yükleyin veya bilgileri girin. Kapsamlı exit analizi dahil tam rapor üretilir.','Upload pitch deck or fill details. Comprehensive report with exit analysis.'))),
+      error&&h('div',{className:'err'},error),
+      h('div',{className:'card'},h('div',{className:'sec'},L('Pitch Deck (Opsiyonel)','Pitch Deck (Optional)')),
+        h('div',{onClick:()=>fileRef.current?.click(),style:{border:`2px dashed ${pdfName?'var(--green)':'var(--gray-200)'}`,borderRadius:8,padding:20,textAlign:'center',cursor:'pointer',background:pdfName?'var(--green-light)':'var(--gray-50)',transition:'all .15s'}},
+          h('input',{ref:fileRef,type:'file',accept:'.pdf',onChange:handleFile,style:{display:'none'}}),
+          pdfName?h('div',null,h('div',{style:{fontSize:14,fontWeight:600,color:'var(--green)',marginBottom:3}},pdfName),h('div',{style:{fontSize:12,color:'var(--gray-400)'}},L('Yüklendi','Uploaded'))):h('div',null,h('div',{style:{fontSize:13,color:'var(--gray-400)',marginBottom:3}},L('PDF tıklayın veya sürükleyin','Click or drag a PDF')),h('div',{style:{fontSize:12,color:'var(--gray-300)'}},L('Pitch deck, teaser, yatırım notu…','Pitch deck, teaser, memo…')))
+        ),
+        pdfB64&&h('button',{onClick:handleParse,disabled:isParsing,style:{marginTop:10,width:'100%',padding:10,background:isParsing?'var(--gray-50)':'var(--blue-light)',color:isParsing?'var(--gray-300)':'var(--blue)',border:`1px solid ${isParsing?'var(--gray-200)':'var(--blue-mid)'}`,borderRadius:6,cursor:isParsing?'not-allowed':'pointer',fontSize:13,fontWeight:600}},isParsing?L('Okunuyor…','Parsing…'):L('✦ PDF\'den Otomatik Doldur','✦ Auto-fill from PDF'))
+      ),
+      h('div',{className:'card'},h('div',{className:'sec'},L('Şirket Bilgileri','Company Information')),
+        h('div',{className:'g2',style:{marginBottom:12}},
+          ...[['companyName',L('Şirket Adı *','Company Name *')],['website','Website'],['sector',L('Sektör','Sector')],['country',L('Ülke','Country')],['foundedYear',L('Kuruluş Yılı','Founded Year')]].map(([k,lbl])=>h('div',{key:k},h('div',{className:'lbl'},lbl),h('input',{className:'inp',value:form[k]||'',onChange:ev=>upd(k)(ev.target.value)})))
+        ),
+        h('div',{style:{marginBottom:12}},h('div',{className:'lbl'},L('Aşama','Stage')),h('select',{className:'sel',value:form.stage,onChange:ev=>upd('stage')(ev.target.value)},['Pre-Seed','Seed','Series A','Series B','Series C+'].map(o=>h('option',{key:o,value:o},o)))),
+        h('div',{style:{marginBottom:12}},h('div',{className:'lbl'},L('Açıklama','Description')),h('textarea',{className:'ta',rows:3,value:form.description||'',onChange:ev=>upd('description')(ev.target.value)})),
+        h('div',null,h('div',{className:'lbl'},L('Problem','Problem Solved')),h('textarea',{className:'ta',rows:2,value:form.problem||'',onChange:ev=>upd('problem')(ev.target.value)}))
+      ),
+      h('div',{className:'card'},h('div',{className:'sec'},L('Kurucu Ekip','Founding Team')),
+        form.founders.map((f,i)=>h('div',{key:i,style:{background:'var(--gray-50)',borderRadius:7,padding:14,marginBottom:10,position:'relative',border:'1px solid var(--gray-200)'}},
+          h('div',{style:{display:'grid',gridTemplateColumns:'1fr 90px 1.4fr',gap:10}},
+            h('div',null,h('div',{className:'lbl'},L('İsim','Name')),h('input',{className:'inp',value:f.name||'',onChange:ev=>updF(i,'name')(ev.target.value)})),
+            h('div',null,h('div',{className:'lbl'},L('Rol','Role')),h('input',{className:'inp',value:f.role||'',onChange:ev=>updF(i,'role')(ev.target.value)})),
+            h('div',null,h('div',{className:'lbl'},'LinkedIn'),h('input',{className:'inp',value:f.linkedin||'',onChange:ev=>updF(i,'linkedin')(ev.target.value)}))
+          ),
+          form.founders.length>1&&h('button',{onClick:()=>setForm(p=>({...p,founders:p.founders.filter((_,idx)=>idx!==i)})),style:{position:'absolute',top:10,right:12,background:'none',border:'none',cursor:'pointer',color:'var(--gray-400)',fontSize:16}},'×')
+        )),
+        form.founders.length<5&&h('button',{onClick:()=>setForm(p=>({...p,founders:[...p.founders,{name:'',role:'',linkedin:''}]})),style:{fontSize:13,color:'var(--blue)',background:'var(--blue-light)',border:'1px solid var(--blue-mid)',borderRadius:6,padding:'7px 14px',cursor:'pointer',fontWeight:600}},`+ ${L('Kurucu Ekle','Add Founder')}`)
+      ),
+      h('div',{className:'card'},h('div',{className:'sec'},L('Finansal Metrikler','Financial Metrics')),
+        h('div',{className:'g3'},
+          ...[['arr','ARR ($)'],['mrr','MRR ($)'],['burnRate',L('Aylık Burn ($)','Monthly Burn ($)')],['runway',L('Runway (ay)','Runway (mo)')],['arpu','ARPU ($)'],['cac','CAC ($)'],['ltv','LTV ($)'],['preMoneyVal','Pre-Money ($)'],['askAmount',L('Aranan Yatırım ($)','Funding Ask ($)')]].map(([k,lbl])=>h('div',{key:k},h('div',{className:'lbl'},lbl),h('input',{className:'inp',value:form[k]||'',onChange:updNum(k)})))
+        )
+      ),
+      h('div',{className:'card'},h('div',{className:'sec'},L('Ek Bilgiler','Additional Information')),
+        h('div',{style:{marginBottom:12}},h('div',{className:'lbl'},L('Başlıca Rakipler','Competitors')),h('textarea',{className:'ta',rows:2,value:form.competitors||'',onChange:ev=>upd('competitors')(ev.target.value)})),
+        h('div',null,h('div',{className:'lbl'},L('Ortaklık Yapısı (Cap Table)','Cap Table')),h('textarea',{className:'ta',rows:2,value:form.capTable||'',onChange:ev=>upd('capTable')(ev.target.value)}))
+      ),
+      h('div',{className:'card'},h('div',{className:'sec'},L('Analiz Ayarları','Settings')),
+        h('div',{className:'lbl',style:{marginBottom:8}},L('ANALİZ DERİNLİĞİ','DEPTH')),
+        h('div',{style:{display:'flex',gap:8}},[['deep',L('🔬 Derin Analiz','🔬 Deep Analysis')],['fast',L('⚡ Hızlı Analiz','⚡ Fast Analysis')]].map(([v,lbl])=>h('button',{key:v,onClick:()=>setDepth(v),className:`tog${depth===v?' on':''}`},lbl)))
+      ),
+      h('button',{className:'btn-primary',onClick:handleAnalyze,disabled:!form.companyName.trim()},L('Analizi Başlat →','Start Analysis →'))
+    )
+  );
+
+  if(step==='analyzing')return h('div',null,header,
+    h('div',{style:{maxWidth:480,margin:'90px auto',padding:'0 24px',textAlign:'center'}},
+      h('div',{style:{width:64,height:64,borderRadius:'50%',background:'var(--navy)',margin:'0 auto 24px',display:'flex',alignItems:'center',justifyContent:'center'}},h('svg',{width:28,height:28,viewBox:'0 0 28 28',fill:'none'},h('path',{d:'M6 22L14 6L22 22',stroke:'white',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}),h('path',{d:'M9 16H19',stroke:'#60A5FA',strokeWidth:2,strokeLinecap:'round'}))),
+      h('div',{style:{fontSize:20,fontWeight:700,fontFamily:'Playfair Display',color:'var(--navy)',marginBottom:10}},L('Analiz Yapılıyor…','Analyzing…')),
+      h('div',{style:{color:'var(--gray-400)',fontSize:13,marginBottom:28,lineHeight:1.6,minHeight:44}},MSGS[lang][loadIdx]),
+      h('div',{style:{background:'var(--gray-200)',borderRadius:3,height:3,overflow:'hidden'}},h('div',{style:{height:'100%',width:`${(loadIdx+1)/7*100}%`,background:'var(--blue)',borderRadius:3,transition:'width .6s ease'}})),
+      h('div',{style:{marginTop:10,fontSize:12,color:'var(--gray-400)'}},`${loadIdx+1} / 7`)
+    )
+  );
+
+  if(step==='results'&&results)return h('div',null,header,toastEl,h(Results,{results,form,lang,onPptx:handlePptx,pptxBusy}));
+  return h('div',null,header);
+}
+ReactDOM.render(React.createElement(App),document.getElementById('root'));
+</script>
+</body>
+</html>
